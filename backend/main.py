@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
 import pandas as pd
-import pandas_ta as ta
+import ta
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 
