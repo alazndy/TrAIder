@@ -12,15 +12,11 @@ import os
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print("[SYSTEM] Starting up...")
-    if os.environ.get("AUTO_START") == "true":
-        print("[SYSTEM] AUTO_START enabled. Launching Bot...")
-        # Start bot in background
-        await start_bot()
+    print("[SYSTEM] TrAIder Engine Starting...")
+    print("[SYSTEM] Use /api/v1/trade/trigger endpoint to run trading cycles")
     yield
     # Shutdown
-    print("[SYSTEM] Shutting down...")
-    await stop_bot()
+    print("[SYSTEM] TrAIder Engine Shutting Down...")
 
 app = FastAPI(title="TrAIder Engine", version="1.0.0", lifespan=lifespan)
 
