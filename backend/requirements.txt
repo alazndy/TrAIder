@@ -9,3 +9,4 @@ ccxt
 firebase-admin
 python-multipart
 yfinance
+scikit-learn
