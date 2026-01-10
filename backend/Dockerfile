@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 # Copy requirements first (caching layer)
 COPY requirements.txt .
 
+# Upgrade pip to ensure latest wheel support
+RUN pip install --upgrade pip
+
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
