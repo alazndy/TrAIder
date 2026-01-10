@@ -2,7 +2,7 @@ fastapi
 uvicorn
 pandas
 numpy<2.0.0
-pandas_ta @ https://github.com/twopirllc/pandas-ta/archive/refs/heads/main.zip
+ta
 pydantic
 python-dotenv
 ccxt

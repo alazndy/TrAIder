@@ -6,7 +6,7 @@ Uses technical indicators as features to predict BUY/SELL signals.
 from .base import BaseStrategy
 from typing import Dict, Any
 import pandas as pd
-import pandas_ta as ta
+import ta
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler

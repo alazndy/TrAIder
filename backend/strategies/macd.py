@@ -1,7 +1,7 @@
 from .base import BaseStrategy
 from typing import Dict, Any
 import pandas as pd
-import pandas_ta as ta
+import ta
 import numpy as np
 
 class MACDStrategy(BaseStrategy):
