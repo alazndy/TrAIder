@@ -6,7 +6,23 @@ import pandas_ta as ta
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="TrAIder Engine", version="1.0.0")
+from contextlib import asynccontextmanager
+import os
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    print("[SYSTEM] Starting up...")
+    if os.environ.get("AUTO_START") == "true":
+        print("[SYSTEM] AUTO_START enabled. Launching Bot...")
+        # Start bot in background
+        await start_bot()
+    yield
+    # Shutdown
+    print("[SYSTEM] Shutting down...")
+    await stop_bot()
+
+app = FastAPI(title="TrAIder Engine", version="1.0.0", lifespan=lifespan)
 
 # CORS Setup - Frontend port 3000
 app.add_middleware(
