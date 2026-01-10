@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pandas
+numpy
+pandas_ta
+pydantic
+python-dotenv
+ccxt
+firebase-admin
+python-multipart
+yfinance
