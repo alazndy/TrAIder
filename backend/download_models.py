@@ -17,9 +17,30 @@ def download_models():
     print("[MODEL_SYNC] Downloading models from Firebase Storage...")
     
     try:
-        bucket = storage.bucket()
-        blobs = bucket.list_blobs(prefix="models/data/")
+        # Initialize Firebase with explicit credentials if not already done
+        if not firebase_admin._apps:
+            # Try to find credentials file
+            cred_path = "serviceAccountKey.json"
+            if os.path.exists(cred_path):
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred, {
+                    'storageBucket': 'tr-ai-der.firebasestorage.app'
+                })
+                print("[MODEL_SYNC] Firebase initialized with credentials file.")
+            else:
+                # Try default credentials (Cloud Run, etc)
+                firebase_admin.initialize_app(options={
+                    'storageBucket': 'tr-ai-der.firebasestorage.app'
+                })
+                print("[MODEL_SYNC] Firebase initialized with default credentials.")
         
+        bucket = storage.bucket()
+        blobs = list(bucket.list_blobs(prefix="models/data/"))
+        
+        if len(blobs) == 0:
+            print("[MODEL_SYNC] No models found in cloud storage.")
+            return
+            
         downloaded = 0
         for blob in blobs:
             if blob.name.endswith('.pkl'):
@@ -43,10 +64,4 @@ def download_models():
         print("[MODEL_SYNC] Will continue without AI models (fallback to simpler strategies)")
 
 if __name__ == "__main__":
-    # For local testing
-    if not firebase_admin._apps:
-        cred = credentials.Certificate("serviceAccountKey.json")
-        firebase_admin.initialize_app(cred, {
-            'storageBucket': 'tr-ai-der.firebasestorage.app'
-        })
     download_models()
