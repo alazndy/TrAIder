@@ -106,7 +106,7 @@ def save_signal_to_db(signal_data):
         db = firestore.client()
         # Add timestamp to record
         signal_data['timestamp'] = firestore.SERVER_TIMESTAMP
-        signal_data['created_at'] = datetime.now()
+        signal_data['created_at'] = datetime.utcnow()
         
         # Collection: signals
         db.collection('signals').add(signal_data)
@@ -116,7 +116,7 @@ def save_signal_to_db(signal_data):
 
 def train_models():
     print("\n" + "="*60)
-    print("INITIALIZING & TRAINING MODELS FOR PAPER TRADING")
+    print(f"INITIALIZING & TRAINING MODELS FOR PAPER TRADING")
     print("="*60)
     
     macro_df = fetch_macro_data()
@@ -144,7 +144,7 @@ def run_live_cycle():
     from portfolio_manager import get_portfolio_manager
     
     print("\n" + "="*60)
-    print(f"PAPER TRADING LIVE START: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"PAPER TRADING LIVE START: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
     print("="*60)
     
     # Initialize portfolio manager
@@ -208,7 +208,8 @@ def run_live_cycle():
             "price": float(price),
             "mode": mode,
             "desc": desc,
-            "is_paper": True
+            "is_paper": True,
+            "created_at": datetime.utcnow()
         }
         
         signals.append(signal_record)
@@ -234,7 +235,7 @@ def run_live_cycle():
             "desc": log_msg,
             "is_paper": True,
             "timestamp": firestore.SERVER_TIMESTAMP,
-            "created_at": datetime.now()
+            "created_at": datetime.utcnow()
         }
         db = firestore.client()
         db.collection('signals').add(heartbeat)
@@ -257,7 +258,7 @@ def run_live_cycle():
                 "desc": report_msg,
                 "is_paper": True,
                 "timestamp": firestore.SERVER_TIMESTAMP,
-                "created_at": datetime.now()
+                "created_at": datetime.utcnow()
             }
             db.collection('signals').add(hourly_signal)
             print(f"  [Report] {report_msg}")

@@ -101,7 +101,7 @@ class PortfolioManager:
             positions[symbol] = {
                 'amount': amount,
                 'entry_price': price,
-                'entry_time': datetime.now().isoformat(),
+                'entry_time': datetime.utcnow().isoformat(),
                 'confidence': confidence
             }
             
@@ -115,7 +115,7 @@ class PortfolioManager:
                 'value': trade_amount,
                 'confidence': confidence,
                 'balance_after': new_balance,
-                'created_at': datetime.now()
+                'created_at': datetime.utcnow()
             }
             
             # Save trade to Firestore
@@ -126,7 +126,7 @@ class PortfolioManager:
                 'balance': new_balance,
                 'positions': positions,
                 'total_trades': portfolio.get('total_trades', 0) + 1,
-                'updated_at': datetime.now()
+                'updated_at': datetime.utcnow()
             })
             
             print(f"  [TRADE] BUY {amount:.4f} {symbol} @ ${price:.4f} (${trade_amount:.2f})")
