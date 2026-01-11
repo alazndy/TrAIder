@@ -437,9 +437,9 @@ export default function Dashboard() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent">
-                <Zap className="text-yellow-400 h-8 w-8" /> TrAIder Live Pulse
+                <Zap className="text-yellow-400 h-8 w-8" /> TrAIder Canlı Akış
               </h1>
-              <p className="text-slate-400 mt-1">Real-time AI Trading Signals & Portfolio Tracking</p>
+              <p className="text-slate-400 mt-1">Gerçek Zamanlı Yapay Zeka Sinyalleri & Portföy Takibi</p>
             </div>
             <div className="flex items-center gap-3">
               {/* Notification Toggle */}
@@ -450,7 +450,7 @@ export default function Dashboard() {
                     ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" 
                     : "bg-slate-800 text-slate-400 hover:bg-slate-700"
                 }`}
-                title={notificationsEnabled ? "Notifications enabled" : "Enable notifications"}
+                title={notificationsEnabled ? "Bildirimler açık" : "Bildirimleri aç"}
               >
                 {notificationsEnabled ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
               </button>
@@ -463,14 +463,14 @@ export default function Dashboard() {
                     ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30" 
                     : "bg-slate-800 text-slate-400 hover:bg-slate-700"
                 }`}
-                title={soundEnabled ? "Sound enabled" : "Sound disabled"}
+                title={soundEnabled ? "Ses açık" : "Ses kapalı"}
               >
                 {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
               </button>
               
               <Badge variant="outline" className="text-green-400 border-green-400/50 bg-green-500/10 animate-pulse px-3 py-1">
                 <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2 animate-ping" />
-                System Online
+                Sistem Çevrimiçi
               </Badge>
             </div>
           </div>
@@ -486,7 +486,7 @@ export default function Dashboard() {
                     <Wallet className="h-6 w-6 text-emerald-400" />
                   </div>
                   <div>
-                    <p className="text-slate-400 text-xs">Portfolio Value</p>
+                    <p className="text-slate-400 text-xs">Portföy Değeri</p>
                     <div className="text-2xl md:text-3xl font-bold text-white">
                       ${(portfolio.balance + Object.values(portfolio.positions).reduce((sum, pos) => sum + (pos.amount * pos.entry_price), 0)).toFixed(2)}
                     </div>
@@ -495,27 +495,27 @@ export default function Dashboard() {
 
                 {/* Liquid Cash */}
                 <div className="text-center md:text-left">
-                  <p className="text-slate-400 text-xs">💵 Liquid Cash</p>
+                  <p className="text-slate-400 text-xs">💵 Nakit Varlık</p>
                   <div className="text-xl md:text-2xl font-bold text-green-400">
                     ${portfolio.balance.toFixed(2)}
                   </div>
-                  <p className="text-xs text-slate-500">Available</p>
+                  <p className="text-xs text-slate-500">Kullanılabilir</p>
                 </div>
 
                 {/* P&L */}
                 <div className="text-center md:text-left">
-                  <p className="text-slate-400 text-xs">📈 P&L</p>
+                  <p className="text-slate-400 text-xs">📈 K/Z</p>
                   <div className={`text-xl md:text-2xl font-bold ${portfolio.total_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {portfolio.total_profit >= 0 ? '+' : ''}${portfolio.total_profit.toFixed(2)}
                   </div>
                   <p className={`text-xs ${portfolio.total_profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {((portfolio.balance - portfolio.initial_balance) / portfolio.initial_balance * 100).toFixed(1)}% ROI
+                    {((portfolio.balance - portfolio.initial_balance) / portfolio.initial_balance * 100).toFixed(1)}% Getiri
                   </p>
                 </div>
 
                 {/* Win Rate */}
                 <div className="text-center md:text-left">
-                  <p className="text-slate-400 text-xs">🎯 Win Rate</p>
+                  <p className="text-slate-400 text-xs">🎯 Kazanma Oranı</p>
                   <div className="text-xl md:text-2xl font-bold text-cyan-400">
                     {portfolio.total_trades > 0 ? ((portfolio.winning_trades / portfolio.total_trades) * 100).toFixed(0) : 0}%
                   </div>
@@ -524,21 +524,21 @@ export default function Dashboard() {
 
                 {/* Trades */}
                 <div className="text-center md:text-left">
-                  <p className="text-slate-400 text-xs">📊 Total Trades</p>
+                  <p className="text-slate-400 text-xs">📊 Toplam İşlem</p>
                   <div className="text-xl md:text-2xl font-bold text-violet-400">
                     {portfolio.total_trades}
                   </div>
-                  <p className="text-xs text-slate-500">Completed</p>
+                  <p className="text-xs text-slate-500">Tamamlanan</p>
                 </div>
               </div>
 
               {/* Allocation Bar */}
               <div className="mt-6">
                 <div className="flex justify-between text-xs text-slate-400 mb-1">
-                  <span>Portfolio Allocation</span>
+                  <span>Portföy Dağılımı</span>
                   <span>
-                    Cash: {((portfolio.balance / portfolio.initial_balance) * 100).toFixed(0)}% | 
-                    Invested: {((Object.values(portfolio.positions).reduce((sum, pos) => sum + (pos.amount * pos.entry_price), 0) / portfolio.initial_balance) * 100).toFixed(0)}%
+                    Nakit: {((portfolio.balance / portfolio.initial_balance) * 100).toFixed(0)}% | 
+                    Yatırım: {((Object.values(portfolio.positions).reduce((sum, pos) => sum + (pos.amount * pos.entry_price), 0) / portfolio.initial_balance) * 100).toFixed(0)}%
                   </span>
                 </div>
                 <div className="h-3 bg-slate-700 rounded-full overflow-hidden flex">
@@ -554,11 +554,11 @@ export default function Dashboard() {
                 <div className="flex gap-4 mt-2 text-xs">
                   <div className="flex items-center gap-1">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-400" />
-                    <span className="text-slate-400">Cash</span>
+                    <span className="text-slate-400">Nakit</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400" />
-                    <span className="text-slate-400">Invested</span>
+                    <span className="text-slate-400">Yatırım</span>
                   </div>
                 </div>
               </div>
@@ -568,17 +568,17 @@ export default function Dashboard() {
                 <div className="mt-6 pt-4 border-t border-slate-700/50">
                   <p className="text-white font-semibold mb-3 flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-blue-400" />
-                    Open Positions ({Object.keys(portfolio.positions).length})
+                    Açık Pozisyonlar ({Object.keys(portfolio.positions).length})
                   </p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-slate-400 text-xs border-b border-slate-700/50">
-                          <th className="text-left py-2">Coin</th>
-                          <th className="text-right py-2">Amount</th>
-                          <th className="text-right py-2">Entry Price</th>
-                          <th className="text-right py-2">Value</th>
-                          <th className="text-right py-2 hidden md:table-cell">% of Portfolio</th>
+                          <th className="text-left py-2">Koin</th>
+                          <th className="text-right py-2">Miktar</th>
+                          <th className="text-right py-2">Giriş Fiyatı</th>
+                          <th className="text-right py-2">Değer</th>
+                          <th className="text-right py-2 hidden md:table-cell">Portföy %</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -628,8 +628,8 @@ export default function Dashboard() {
               ) : (
                 <div className="mt-6 pt-4 border-t border-slate-700/50 text-center py-6">
                   <Wallet className="h-12 w-12 text-slate-600 mx-auto mb-2" />
-                  <p className="text-slate-500 text-sm">No open positions</p>
-                  <p className="text-slate-600 text-xs">Waiting for high-confidence BUY signals...</p>
+                  <p className="text-slate-500 text-sm">Açık pozisyon yok</p>
+                  <p className="text-slate-600 text-xs">Yüksek güvenli AL sinyalleri bekleniyor...</p>
                 </div>
               )}
             </CardContent>
@@ -640,48 +640,48 @@ export default function Dashboard() {
             {/* Total Signals */}
             <Card className="bg-gradient-to-br from-violet-900/40 to-purple-900/20 border-violet-700/30 backdrop-blur-xl">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium text-slate-400">Total Signals</CardTitle>
+                <CardTitle className="text-xs font-medium text-slate-400">Toplam Sinyal</CardTitle>
                 <BarChart3 className="h-4 w-4 text-violet-400" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-violet-300">{portfolioStats.totalTrades}</div>
-                <p className="text-xs text-slate-500">All time</p>
+                <p className="text-xs text-slate-500">Tüm zamanlar</p>
               </CardContent>
             </Card>
 
             {/* Win Rate */}
             <Card className="bg-gradient-to-br from-cyan-900/40 to-blue-900/20 border-cyan-700/30 backdrop-blur-xl">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium text-slate-400">Buy Rate</CardTitle>
+                <CardTitle className="text-xs font-medium text-slate-400">Alış Oranı</CardTitle>
                 <Target className="h-4 w-4 text-cyan-400" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-cyan-300">{portfolioStats.winRate.toFixed(1)}%</div>
-                <p className="text-xs text-slate-500">Buy vs Total</p>
+                <p className="text-xs text-slate-500">Alış / Toplam</p>
               </CardContent>
             </Card>
 
             {/* Average Confidence */}
             <Card className="bg-gradient-to-br from-amber-900/40 to-orange-900/20 border-amber-700/30 backdrop-blur-xl">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium text-slate-400">Avg Confidence</CardTitle>
+                <CardTitle className="text-xs font-medium text-slate-400">Ort. Güven</CardTitle>
                 <PieChart className="h-4 w-4 text-amber-400" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-amber-300">{portfolioStats.avgConfidence.toFixed(1)}%</div>
-                <p className="text-xs text-slate-500">Model certainty</p>
+                <p className="text-xs text-slate-500">Model kesinliği</p>
               </CardContent>
             </Card>
 
             {/* Today's Activity */}
             <Card className="bg-gradient-to-br from-pink-900/40 to-rose-900/20 border-pink-700/30 backdrop-blur-xl">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium text-slate-400">Today</CardTitle>
+                <CardTitle className="text-xs font-medium text-slate-400">Bugün</CardTitle>
                 <Wallet className="h-4 w-4 text-pink-400" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-pink-300">{portfolioStats.todayProfit}</div>
-                <p className="text-xs text-slate-500">Signals today</p>
+                <p className="text-xs text-slate-500">Bugünkü sinyaller</p>
               </CardContent>
             </Card>
           </div>
@@ -691,7 +691,7 @@ export default function Dashboard() {
             {/* Recent Activity Card */}
             <Card className="bg-gradient-to-br from-slate-900/90 to-slate-800/50 border-slate-700/50 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-300">Recent Activity</CardTitle>
+                <CardTitle className="text-sm font-medium text-slate-300">Son Hareketler</CardTitle>
                 <div className="p-2 bg-blue-500/20 rounded-lg">
                   <Activity className="h-5 w-5 text-blue-400" />
                 </div>
@@ -700,14 +700,14 @@ export default function Dashboard() {
                 <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                   {stats.active_signals}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Signals in feed</p>
+                <p className="text-xs text-slate-500 mt-1">Akıştaki sinyaller</p>
               </CardContent>
             </Card>
 
             {/* Buy Opportunities Card */}
             <Card className="bg-gradient-to-br from-slate-900/90 to-emerald-900/20 border-emerald-700/30 backdrop-blur-xl shadow-xl hover:shadow-emerald-500/10 transition-all hover:scale-[1.02]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-300">Buy Signals</CardTitle>
+                <CardTitle className="text-sm font-medium text-slate-300">Alış Sinyalleri</CardTitle>
                 <div className="p-2 bg-emerald-500/20 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-emerald-400" />
                 </div>
@@ -717,7 +717,7 @@ export default function Dashboard() {
                   {stats.buy_signals}
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Best: <span className="text-emerald-400 font-semibold">{portfolioStats.bestSymbol}</span>
+                  En İyi: <span className="text-emerald-400 font-semibold">{portfolioStats.bestSymbol}</span>
                 </p>
               </CardContent>
             </Card>
@@ -725,7 +725,7 @@ export default function Dashboard() {
             {/* Sell Warnings Card */}
             <Card className="bg-gradient-to-br from-slate-900/90 to-rose-900/20 border-rose-700/30 backdrop-blur-xl shadow-xl hover:shadow-rose-500/10 transition-all hover:scale-[1.02]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-300">Sell Signals</CardTitle>
+                <CardTitle className="text-sm font-medium text-slate-300">Satış Sinyalleri</CardTitle>
                 <div className="p-2 bg-rose-500/20 rounded-lg">
                   <TrendingDown className="h-5 w-5 text-rose-400" />
                 </div>
@@ -735,7 +735,7 @@ export default function Dashboard() {
                   {stats.sell_signals}
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Watch: <span className="text-rose-400 font-semibold">{portfolioStats.worstSymbol}</span>
+                  Dikkat: <span className="text-rose-400 font-semibold">{portfolioStats.worstSymbol}</span>
                 </p>
               </CardContent>
             </Card>
@@ -747,7 +747,7 @@ export default function Dashboard() {
               <CardHeader>
                 <CardTitle className="text-lg text-white flex items-center gap-2">
                   <PieChart className="h-5 w-5 text-violet-400" />
-                  Symbol Performance
+                  Symbol Performansı
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -777,7 +777,7 @@ export default function Dashboard() {
             <CardHeader className="border-b border-slate-700/50">
               <CardTitle className="text-xl text-white flex items-center gap-2">
                 <Activity className="h-5 w-5 text-yellow-400" />
-                Live Signal Feed
+                Canlı Sinyal Akışı
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -785,13 +785,13 @@ export default function Dashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-slate-700/50 hover:bg-transparent">
-                      <TableHead className="text-slate-400 font-semibold">Time</TableHead>
-                      <TableHead className="text-slate-400 font-semibold">Symbol</TableHead>
-                      <TableHead className="text-slate-400 font-semibold">Strategy</TableHead>
-                      <TableHead className="text-slate-400 font-semibold">Signal</TableHead>
-                      <TableHead className="text-slate-400 font-semibold">Confidence</TableHead>
-                      <TableHead className="text-slate-400 font-semibold">Price</TableHead>
-                      <TableHead className="text-slate-400 font-semibold hidden md:table-cell">Context</TableHead>
+                      <TableHead className="text-slate-400 font-semibold">Zaman</TableHead>
+                      <TableHead className="text-slate-400 font-semibold">Sembol</TableHead>
+                      <TableHead className="text-slate-400 font-semibold">Strateji</TableHead>
+                      <TableHead className="text-slate-400 font-semibold">Sinyal</TableHead>
+                      <TableHead className="text-slate-400 font-semibold">Güven</TableHead>
+                      <TableHead className="text-slate-400 font-semibold">Fiyat</TableHead>
+                      <TableHead className="text-slate-400 font-semibold hidden md:table-cell">Bağlam</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -800,8 +800,8 @@ export default function Dashboard() {
                         <TableCell colSpan={7} className="text-center py-12 text-slate-500">
                           <div className="flex flex-col items-center gap-2">
                             <Activity className="h-8 w-8 animate-pulse" />
-                            <p>Waiting for signals...</p>
-                            <p className="text-xs">Trigger a trading cycle to see AI predictions</p>
+                            <p>Sinyal bekleniyor...</p>
+                            <p className="text-xs">Yapay zeka tahminlerini görmek için işlem döngüsü bekleniyor</p>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -965,8 +965,8 @@ export default function Dashboard() {
 
           {/* FOOTER */}
           <div className="text-center text-slate-600 text-xs py-4">
-            <p>TrAIder AI Trading System • Paper Trading with $1000 Initial Capital</p>
-            <p className="mt-1">Last Updated: {new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}</p>
+            <p>TrAIder Yapay Zeka Alım-Satım Sistemi • $1000 Başlangıç Sermayeli Sanal İşlem</p>
+            <p className="mt-1">Son Güncelleme: {new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}</p>
           </div>
 
         </div>
