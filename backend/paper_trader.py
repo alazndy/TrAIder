@@ -278,7 +278,25 @@ def start_live_trader():
             run_live_cycle()
             time.sleep(60) 
         except Exception as e:
-            print(f"[THREAD] Critical Error in Trader Loop: {e}")
+            err_msg = f"CRITICAL ERROR IN TRADER LOOP: {str(e)}"
+            print(f"[THREAD] {err_msg}")
+            try:
+                # Emergency Log to DB
+                db = firestore.client()
+                db.collection('signals').add({
+                    "symbol": "SYSTEM",
+                    "strategy": "CRASH_REPORT",
+                    "signal": "ERROR",
+                    "confidence": 0.0,
+                    "price": 0.0,
+                    "mode": "system",
+                    "desc": err_msg[:200], # Trucate if too long
+                    "is_paper": True,
+                    "timestamp": firestore.SERVER_TIMESTAMP,
+                    "created_at": datetime.utcnow()
+                })
+            except:
+                pass # If DB fails, we can't do much
             time.sleep(10)
 
 if __name__ == "__main__":
