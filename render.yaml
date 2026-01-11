@@ -1,0 +1,19 @@
+services:
+  - type: worker
+    name: traider-worker
+    env: docker
+    dockerContext: .
+    dockerfilePath: backend/Dockerfile
+    repo: https://github.com/alazndy/TrAIder
+    region: frankfurt
+    plan: free
+    branch: master
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+    # Command to override the default Docker CMD if needed,
+    # but our Dockerfile CMD ["python", "main.py"] runs the API.
+    # For the continuous trader, we want to run paper_trader.py.
+    # So we should probably update Dockerfile or override here.
+    # Using Docker CMD override to run the paper trader loop:
+    dockerCommand: python backend/paper_trader.py --live

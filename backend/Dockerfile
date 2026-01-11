@@ -8,7 +8,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (caching layer)
-COPY requirements.txt .
+# Copy requirements from backend folder (context is root)
+COPY backend/requirements.txt .
 
 # Upgrade pip to ensure latest wheel support
 RUN pip install --upgrade pip
@@ -16,12 +17,8 @@ RUN pip install --upgrade pip
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all files
-COPY . .
-
-# Set environment variables
-# PYTHONUNBUFFERED=1 ensures logs are visible in Cloud Logging immediately
-ENV PYTHONUNBUFFERED=1
+# Copy the entire backend directory into /app
+COPY backend/ .
 
 # Run the FastAPI server (Render sets $PORT automatically)
 CMD ["python", "main.py"]
