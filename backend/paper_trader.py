@@ -269,6 +269,17 @@ def run_live_cycle():
 
     print("Waiting for next cycle...")
 
+def start_live_trader():
+    """Starts the infinite trading loop (for embedding in main.py)"""
+    print("[THREAD] Starting Live Trader Background Service...")
+    while True:
+        try:
+            run_live_cycle()
+            time.sleep(60) 
+        except Exception as e:
+            print(f"[THREAD] Critical Error in Trader Loop: {e}")
+            time.sleep(10)
+
 if __name__ == "__main__":
     # Ensure models are present (for Cloud Run / Fresh Env)
     print("[*] Checking for models...")

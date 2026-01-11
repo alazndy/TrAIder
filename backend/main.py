@@ -22,6 +22,17 @@ async def lifespan(app: FastAPI):
         print(f"[SYSTEM] Model download skipped: {e}")
     
     print("[SYSTEM] Use /api/v1/trade/trigger endpoint to run trading cycles")
+    
+    # Start Trading Bot in Background Thread (Hybrid Mode for Render)
+    try:
+        from paper_trader import start_live_trader
+        import threading
+        t = threading.Thread(target=start_live_trader, daemon=True)
+        t.start()
+        print("[SYSTEM] Background Trading Thread Started.")
+    except Exception as e:
+        print(f"[SYSTEM] Failed to start background trader: {e}")
+
     yield
     # Shutdown
     print("[SYSTEM] TrAIder Engine Shutting Down...")
