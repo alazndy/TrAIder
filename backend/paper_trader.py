@@ -60,6 +60,7 @@ def get_data_dir():
     return "data"  # Default fallback
 
 DATA_DIR = get_data_dir()
+LAST_REPORT_TIME = time.time()
 
 def save_signal_to_db(signal_data):
     """Save signal to Firestore"""
@@ -197,6 +198,29 @@ def run_live_cycle():
         print(f"  [Heartbeat] {log_msg}")
     except Exception as e:
         print(f"  [!] Heartbeat failed: {e}")
+
+    # Check for Hourly Report (Every 60 mins)
+    global LAST_REPORT_TIME
+    if time.time() - LAST_REPORT_TIME >= 3600:
+        try:
+            report_msg = f"Hourly Report: Profit ${portfolio_stats['total_profit']:.2f} | Trades: {portfolio_stats['total_trades']} | Balance: ${portfolio_stats['balance']:.2f}"
+            hourly_signal = {
+                "symbol": "SYSTEM",
+                "strategy": "HOURLY_REPORT",
+                "signal": "INFO", 
+                "confidence": 100.0,
+                "price": 0.0,
+                "mode": "system",
+                "desc": report_msg,
+                "is_paper": True,
+                "timestamp": firestore.SERVER_TIMESTAMP,
+                "created_at": datetime.now()
+            }
+            db.collection('signals').add(hourly_signal)
+            print(f"  [Report] {report_msg}")
+            LAST_REPORT_TIME = time.time()
+        except Exception as e:
+            print(f"  [!] Hourly Report Failed: {e}")
 
     print("-" * 60)
 

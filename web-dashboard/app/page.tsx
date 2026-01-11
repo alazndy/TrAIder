@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,8 +84,7 @@ export default function Dashboard() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [lastSignalCount, setLastSignalCount] = useState(0);
   const [systemLogs, setSystemLogs] = useState<Signal[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
+  
   // Restore settings from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -120,10 +119,90 @@ export default function Dashboard() {
     }
   };
 
-  // Play notification sound
-  const playSound = () => {
-    if (soundEnabled && audioRef.current) {
-      audioRef.current.play().catch(() => {});
+  // Play adaptive notification sound
+  const playAdaptiveSound = (type: string, confidence: number, strategy: string) => {
+    if (!soundEnabled) return;
+
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      const now = ctx.currentTime;
+      
+      // Hourly Report or System Alert
+      if (strategy === 'HOURLY_REPORT') {
+        const osc2 = ctx.createOscillator();
+        const osc3 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        const gain3 = ctx.createGain();
+        
+        osc2.connect(gain2);
+        osc3.connect(gain3);
+        gain2.connect(ctx.destination);
+        gain3.connect(ctx.destination);
+        
+        // Major Chord (C4 - E4 - G4)
+        osc.frequency.value = 261.63;
+        osc2.frequency.value = 329.63;
+        osc3.frequency.value = 392.00;
+        
+        gain.gain.value = 0.1;
+        gain2.gain.value = 0.1;
+        gain3.gain.value = 0.1;
+        
+        osc.start(now);
+        osc2.start(now + 0.1);
+        osc3.start(now + 0.2);
+        
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+        gain3.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+        
+        osc.stop(now + 1.5);
+        osc2.stop(now + 1.5);
+        osc3.stop(now + 1.5);
+        return;
+      }
+
+      // Trading Signals
+      gain.gain.setValueAtTime(0.1, now);
+      
+      const isHighConf = confidence >= 80;
+
+      if (type === 'BUY') {
+        // High pitch success tone
+        osc.frequency.setValueAtTime(880, now); // A5
+        if (isHighConf) {
+          // Rapid ascending flourish for high confidence
+          osc.frequency.setValueAtTime(880, now);
+          osc.frequency.linearRampToValueAtTime(1760, now + 0.1); // A6
+        }
+      } else if (type === 'SELL') {
+        // Lower pitch warning tone
+        osc.frequency.setValueAtTime(440, now); // A4
+        if (isHighConf) {
+          // Descending slide
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.linearRampToValueAtTime(220, now + 0.2); // A3
+        }
+      } else {
+        // Neutral/Other
+        osc.frequency.setValueAtTime(330, now); // E4
+      }
+
+      osc.start(now);
+      osc.gain.exponentialRampToValueAtTime(0.001, now + (isHighConf ? 0.6 : 0.3));
+      osc.stop(now + (isHighConf ? 0.6 : 0.3));
+
+    } catch (e) {
+      console.error("Audio play failed:", e);
     }
   };
 
@@ -144,7 +223,7 @@ export default function Dashboard() {
     const q = query(
       collection(db, "signals"),
       orderBy("created_at", "desc"),
-      limit(100) // Get more signals for stats
+      limit(100)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -162,7 +241,7 @@ export default function Dashboard() {
         const signalItem = { ...data, id: doc.id };
         allMsgs.push(signalItem);
         
-        if (data.strategy === "HEARTBEAT") {
+        if (data.strategy === "HEARTBEAT" || data.strategy === "HOURLY_REPORT") {
           logs.push(signalItem);
         } else {
           tradeSignals.push(signalItem);
@@ -181,24 +260,28 @@ export default function Dashboard() {
         }
       });
 
-      // Check for new signals (exclude heartbeats from notification logic if preferred, keeping simple for now)
-      // Only notify if new TRADING signals appeared
-      const newTradeSignalsCount = tradeSignals.length;
-      // We need a separate tracker for trade signals count to avoid notifying on Heartbeat
-      // But for simplicity, we'll just check if the top signal is not heartbeat and is new
-      
-      if (tradeSignals.length > 0 && lastSignalCount > 0 && tradeSignals.length > lastSignalCount) { // Simple check might be flawed if ratio changes, but works for append-only
-         const newSignal = tradeSignals[0];
-         // Basic debounce/check
-         if (newSignal.created_at && (!lastSignalCount || (allMsgs.length > lastSignalCount))) {
-            playSound();
-            sendNotification(
+      // Sound & Notification Logic
+      // Check for new signals
+      if (allMsgs.length > 0 && lastSignalCount > 0 && allMsgs.length > lastSignalCount) {
+         const newSignal = allMsgs[0];
+         
+         // Only play if it's a fresh signal (created in last 30 seconds to avoid spam on reload)
+         const isFresh = newSignal.created_at && (Date.now() - newSignal.created_at.seconds * 1000) < 30000;
+         
+         if (isFresh) {
+           if (newSignal.strategy === 'HOURLY_REPORT') {
+             playAdaptiveSound('INFO', 100, 'HOURLY_REPORT');
+             sendNotification('TrAIder Hourly Report', newSignal.desc);
+           } else if (newSignal.strategy !== 'HEARTBEAT') {
+             playAdaptiveSound(newSignal.signal, newSignal.confidence, newSignal.strategy);
+             sendNotification(
               `${newSignal.signal} Signal: ${newSignal.symbol}`,
               `${newSignal.strategy} | Confidence: ${newSignal.confidence.toFixed(1)}% | $${newSignal.price.toFixed(4)}`
             );
+           }
          }
       }
-      setLastSignalCount(tradeSignals.length);
+      setLastSignalCount(allMsgs.length);
 
       // Calculate portfolio stats
       const avgConfidence = tradeSignals.length > 0 ? totalConfidence / tradeSignals.length : 0;
@@ -298,8 +381,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-50">
-      {/* Notification Sound */}
-      <audio ref={audioRef} src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" />
       
       {/* Background Pattern */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-950/50 via-transparent to-slate-900/50 pointer-events-none" />
