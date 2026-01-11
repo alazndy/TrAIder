@@ -2,8 +2,8 @@ services:
   - type: worker
     name: traider-worker
     env: docker
-    dockerContext: .
-    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    dockerfilePath: Dockerfile
     repo: https://github.com/alazndy/TrAIder
     region: frankfurt
     plan: free
@@ -16,4 +16,4 @@ services:
     # For the continuous trader, we want to run paper_trader.py.
     # So we should probably update Dockerfile or override here.
     # Using Docker CMD override to run the paper trader loop:
-    dockerCommand: python backend/paper_trader.py --live
+    dockerCommand: python paper_trader.py --live
