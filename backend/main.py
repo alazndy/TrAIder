@@ -13,6 +13,14 @@ import os
 async def lifespan(app: FastAPI):
     # Startup
     print("[SYSTEM] TrAIder Engine Starting...")
+    
+    # Download AI models from Firebase Storage (if not already present)
+    try:
+        from download_models import download_models
+        download_models()
+    except Exception as e:
+        print(f"[SYSTEM] Model download skipped: {e}")
+    
     print("[SYSTEM] Use /api/v1/trade/trigger endpoint to run trading cycles")
     yield
     # Shutdown
