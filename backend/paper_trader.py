@@ -18,7 +18,9 @@ from firebase_admin import credentials, firestore
 if not firebase_admin._apps:
     try:
         # Auto-discovery for Cloud Run or local GOOGLE_APPLICATION_CREDENTIALS
-        firebase_admin.initialize_app()
+        firebase_admin.initialize_app(options={
+            'storageBucket': 'tr-ai-der.firebasestorage.app'
+        })
         print("[+] Firebase initialized successfully.")
     except Exception as e:
         print(f"[!] Firebase initialization failed: {e}")
