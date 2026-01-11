@@ -198,7 +198,7 @@ export default function Dashboard() {
       }
 
       osc.start(now);
-      osc.gain.exponentialRampToValueAtTime(0.001, now + (isHighConf ? 0.6 : 0.3));
+      gain.gain.exponentialRampToValueAtTime(0.001, now + (isHighConf ? 0.6 : 0.3));
       osc.stop(now + (isHighConf ? 0.6 : 0.3));
 
     } catch (e) {
@@ -902,7 +902,7 @@ export default function Dashboard() {
                 {systemLogs.length === 0 ? (
                   <p className="text-slate-600 text-xs text-center pt-8">Waiting for heartbeat...</p>
                 ) : (
-                  systemLogs.map((log, i) => (
+                  systemLogs.map((log) => (
                     <div key={log.id} className="text-xs flex gap-2 animate-in fade-in slide-in-from-left-2 items-start opacity-80 hover:opacity-100 transition-opacity">
                       <span className="text-slate-500 shrink-0">
                         [{log.created_at?.seconds ? new Date(log.created_at.seconds * 1000).toLocaleTimeString() : 'Now'}]
