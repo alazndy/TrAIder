@@ -18,8 +18,14 @@ from firebase_admin import credentials, firestore
 if not firebase_admin._apps:
     try:
         import os
-        cred_path = "serviceAccountKey.json"
-        if os.path.exists(cred_path):
+        if os.path.exists("serviceAccountKey.json"):
+            cred_path = "serviceAccountKey.json"
+        elif os.path.exists("backend/serviceAccountKey.json"):
+            cred_path = "backend/serviceAccountKey.json"
+        else:
+            cred_path = None
+            
+        if cred_path:
             cred = credentials.Certificate(cred_path)
             firebase_admin.initialize_app(cred, {
                 'storageBucket': 'tr-ai-der.firebasestorage.app'
@@ -33,6 +39,27 @@ if not firebase_admin._apps:
             print("[+] Firebase initialized with default credentials.")
     except Exception as e:
         print(f"[!] Firebase initialization failed: {e}")
+
+# Import download_models (after firebase init to ensure app exists)
+try:
+    from download_models import download_models
+except ImportError:
+    # Handle both root and backend execution contexts
+    try:
+        from backend.download_models import download_models
+    except ImportError:
+        pass
+
+def get_data_dir():
+    """Get the correct data directory path"""
+    import os
+    if os.path.exists("data"):
+        return "data"
+    elif os.path.exists("backend/data"):
+        return "backend/data"
+    return "data"  # Default fallback
+
+DATA_DIR = get_data_dir()
 
 def save_signal_to_db(signal_data):
     """Save signal to Firestore"""
@@ -50,7 +77,7 @@ def save_signal_to_db(signal_data):
 
 def train_models():
     print("\n" + "="*60)
-    print("🚂 INITIALIZING & TRAINING MODELS FOR PAPER TRADING")
+    print("INITIALIZING & TRAINING MODELS FOR PAPER TRADING")
     print("="*60)
     
     macro_df = fetch_macro_data()
@@ -78,7 +105,7 @@ def run_live_cycle():
     from portfolio_manager import get_portfolio_manager
     
     print("\n" + "="*60)
-    print(f"📡 PAPER TRADING LIVE START: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"PAPER TRADING LIVE START: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*60)
     
     # Initialize portfolio manager
@@ -104,7 +131,9 @@ def run_live_cycle():
         full_df = merge_data(crypto_df, macro_df)
         
         # 2. Load Model
-        model_dir = f"data/paper_{strat_name}_{sym.replace('/', '_')}"
+        # Use simple string concatenation or path join relative to DATA_DIR
+        import os
+        model_dir = os.path.join(DATA_DIR, f"paper_{strat_name}_{sym.replace('/', '_')}")
         strategy = get_strategy(strat_name, {"model_dir": model_dir})
         
         # Check if model exists/trained
@@ -174,6 +203,14 @@ def run_live_cycle():
     print("Waiting for next cycle...")
 
 if __name__ == "__main__":
+    # Ensure models are present (for Cloud Run / Fresh Env)
+    print("[*] Checking for models...")
+    try:
+        download_models()
+    except Exception as e:
+        print(f"[!] Warning: Model download failed (Active models might be missing): {e}")
+
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--train", action="store_true", help="Train models first")
     parser.add_argument("--live", action="store_true", help="Start infinite live loop")
