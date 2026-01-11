@@ -3,7 +3,7 @@ services:
     name: traider-worker
     env: docker
     dockerContext: backend
-    dockerfilePath: Dockerfile
+    dockerfilePath: backend/Dockerfile
     repo: https://github.com/alazndy/TrAIder
     region: frankfurt
     plan: free
