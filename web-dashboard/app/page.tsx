@@ -224,6 +224,8 @@ export default function Dashboard() {
         worstSymbol,
         symbolStats,
       });
+    }, (error) => {
+      console.error("Error fetching signals:", error);
     });
 
     // Listen to portfolio updates
@@ -234,6 +236,9 @@ export default function Dashboard() {
           const data = doc.data() as Portfolio;
           setPortfolio(data);
         });
+      },
+      (error) => {
+        console.error("Error fetching portfolio:", error);
       }
     );
 
@@ -249,6 +254,8 @@ export default function Dashboard() {
         tradesList.push({ ...doc.data(), id: doc.id } as TradeRecord);
       });
       setTrades(tradesList);
+    }, (error) => {
+      console.error("Error fetching trades:", error);
     });
 
     return () => {
