@@ -164,8 +164,13 @@ def run_live_cycle():
         # Check if model exists/trained
         # Accessing internal dict just to check
         if not any(strategy.is_trained.values()):
-             print(f"  [!] Model for {sym} not found. Skipping.")
-             continue
+             print(f"  [!] Model for {sym} not found. Training new model on the fly...")
+             try:
+                 strategy.train_all(full_df)
+                 print(f"  [+] Model trained successfully for {sym}.")
+             except Exception as e:
+                 print(f"  [!] Training failed for {sym}: {e}")
+                 continue
              
         # 3. Predict (Live Candle)
         # We pass the full history up to NOW
