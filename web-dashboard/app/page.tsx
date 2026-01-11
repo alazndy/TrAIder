@@ -85,11 +85,37 @@ export default function Dashboard() {
   const [lastSignalCount, setLastSignalCount] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Restore settings from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Check stored sound preference
+      const storedSound = localStorage.getItem('traider_sound');
+      if (storedSound !== null) {
+        setSoundEnabled(storedSound === 'true');
+      }
+      
+      // Check browser notification permission
+      if ("Notification" in window && Notification.permission === "granted") {
+        setNotificationsEnabled(true);
+      }
+    }
+  }, []);
+
   // Request notification permission
   const requestNotificationPermission = async () => {
     if ("Notification" in window) {
       const permission = await Notification.requestPermission();
-      setNotificationsEnabled(permission === "granted");
+      const isGranted = permission === "granted";
+      setNotificationsEnabled(isGranted);
+    }
+  };
+
+  // Toggle sound with localStorage persistence
+  const toggleSound = () => {
+    const newValue = !soundEnabled;
+    setSoundEnabled(newValue);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('traider_sound', String(newValue));
     }
   };
 
@@ -276,7 +302,7 @@ export default function Dashboard() {
               
               {/* Sound Toggle */}
               <button
-                onClick={() => setSoundEnabled(!soundEnabled)}
+                onClick={toggleSound}
                 className={`p-2 rounded-lg transition-all ${
                   soundEnabled 
                     ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30" 
