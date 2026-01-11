@@ -11,6 +11,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: TZ
+        value: Europe/Istanbul
     # Command to override the default Docker CMD if needed,
     # but our Dockerfile CMD ["python", "main.py"] runs the API.
     # For the continuous trader, we want to run paper_trader.py.

@@ -815,7 +815,7 @@ export default function Dashboard() {
                         >
                           <TableCell className="font-mono text-slate-500 text-xs">
                             {s.created_at?.seconds 
-                              ? new Date(s.created_at.seconds * 1000).toLocaleTimeString() 
+                              ? new Date(s.created_at.seconds * 1000).toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul' }) 
                               : 'Şimdi'}
                           </TableCell>
                           <TableCell className="font-bold text-white text-lg">
@@ -897,7 +897,7 @@ export default function Dashboard() {
                         <TableRow key={t.id} className="border-slate-700/30 hover:bg-slate-800/50">
                           <TableCell className="font-mono text-slate-500 text-xs">
                             {t.created_at?.seconds 
-                              ? new Date(t.created_at.seconds * 1000).toLocaleString() 
+                              ? new Date(t.created_at.seconds * 1000).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }) 
                               : 'Şimdi'}
                           </TableCell>
                           <TableCell>
@@ -949,7 +949,7 @@ export default function Dashboard() {
                   systemLogs.map((log) => (
                     <div key={log.id} className="text-xs flex gap-2 animate-in fade-in slide-in-from-left-2 items-start opacity-80 hover:opacity-100 transition-opacity">
                       <span className="text-slate-500 shrink-0">
-                        [{log.created_at?.seconds ? new Date(log.created_at.seconds * 1000).toLocaleTimeString() : 'Şimdi'}]
+                        [{log.created_at?.seconds ? new Date(log.created_at.seconds * 1000).toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul' }) : 'Şimdi'}]
                       </span>
                       <span className="text-emerald-400/90">&gt;</span>
                       <span className={log.strategy === 'HOURLY_REPORT' ? "text-blue-400 font-bold" : "text-slate-300 break-words"}>
@@ -966,7 +966,7 @@ export default function Dashboard() {
           {/* FOOTER */}
           <div className="text-center text-slate-600 text-xs py-4">
             <p>TrAIder AI Trading System • Paper Trading with $1000 Initial Capital</p>
-            <p className="mt-1">Last Updated: {new Date().toLocaleString()}</p>
+            <p className="mt-1">Last Updated: {new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}</p>
           </div>
 
         </div>
