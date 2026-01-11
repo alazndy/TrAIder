@@ -14,7 +14,7 @@ class PortfolioManager:
     INITIAL_BALANCE = 1000.0  # $1000 starting capital
     POSITION_SIZE_PCT = 0.20  # 20% per trade (increased from 10%)
     
-    def __init__(self, portfolio_id: str = "default"):
+    def __init__(self, portfolio_id: str = "live_portfolio_v1"):
         self.portfolio_id = portfolio_id
         self.db = firestore.client()
         self._init_portfolio()

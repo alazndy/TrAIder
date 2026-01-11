@@ -1,6 +1,6 @@
 'use client';
 
-import { createChart, ColorType, CandlestickSeries } from 'lightweight-charts';
+import { createChart, ColorType, CandlestickSeries, Time, CandlestickData } from 'lightweight-charts';
 import React, { useEffect, useRef } from 'react';
 import { Candle } from '@/services/api';
 
@@ -40,7 +40,7 @@ export const ChartComponent: React.FC<ChartComponentProps> = ({ data }) => {
       wickDownColor: '#ef4444',
     });
 
-    candlestickSeries.setData(data);
+    candlestickSeries.setData(data as unknown as CandlestickData<Time>[]);
 
     window.addEventListener('resize', handleResize);
 
