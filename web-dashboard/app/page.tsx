@@ -17,7 +17,7 @@ interface Signal {
   price: number;
   mode: string;
   desc: string;
-  created_at: any;
+  created_at: { seconds: number } | null;
 }
 
 export default function Dashboard() {
@@ -99,7 +99,8 @@ export default function Dashboard() {
     });
 
     return () => unsubscribe();
-  }, [lastSignalCount, notificationsEnabled, soundEnabled]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastSignalCount]);
 
   const getSignalColor = (signal: string) => {
     switch (signal) {
@@ -109,13 +110,7 @@ export default function Dashboard() {
     }
   };
 
-  const getSignalBg = (signal: string) => {
-    switch (signal) {
-      case "BUY": return "bg-emerald-500/10 border-emerald-500/30";
-      case "SELL": return "bg-rose-500/10 border-rose-500/30";
-      default: return "bg-slate-500/10 border-slate-500/30";
-    }
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-50">
@@ -123,7 +118,7 @@ export default function Dashboard() {
       <audio ref={audioRef} src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" />
       
       {/* Background Pattern */}
-      <div className="fixed inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%239C92AC\" fill-opacity=\"0.03\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-950/50 via-transparent to-slate-900/50 pointer-events-none" />
       
       <div className="relative p-4 md:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
