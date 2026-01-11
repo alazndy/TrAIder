@@ -36,6 +36,20 @@ if not firebase_admin._apps:
             except Exception as e:
                 print(f"[!] Error parsing FIREBASE_CREDENTIALS_JSON: {e}")
 
+        # 1.5 Check for Base64 Env Var (Safer for Render/Docker)
+        if not cred:
+            env_creds_b64 = os.environ.get("FIREBASE_CREDENTIALS_BASE64")
+            if env_creds_b64:
+                try:
+                    import base64
+                    # Decode
+                    json_str = base64.b64decode(env_creds_b64).decode('utf-8')
+                    cred_dict = json.loads(json_str)
+                    cred = credentials.Certificate(cred_dict)
+                    print("[+] Firebase initialized with FIREBASE_CREDENTIALS_BASE64 env var.")
+                except Exception as e:
+                    print(f"[!] Error parsing FIREBASE_CREDENTIALS_BASE64: {e}")
+
         # 2. Try Local File
         if not cred:
             if os.path.exists("serviceAccountKey.json"):
