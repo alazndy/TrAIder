@@ -119,15 +119,60 @@ export default function Dashboard() {
     }
   };
 
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Initialize and Unlock Audio Context on First Interaction
+  useEffect(() => {
+    const unlockAudio = () => {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContext();
+      }
+
+      if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume().then(() => {
+          console.log("Audio Context Resumed/Unlocked");
+        });
+      }
+      
+      // Remove listeners once unlocked
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+    };
+
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
+    window.addEventListener('keydown', unlockAudio);
+
+    return () => {
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+    };
+  }, []);
+
   // Play adaptive notification sound
   const playAdaptiveSound = (type: string, confidence: number, strategy: string) => {
     if (!soundEnabled) return;
 
     try {
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContext) return;
-      
-      const ctx = new AudioContext();
+      if (!audioCtxRef.current) {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContext) {
+           audioCtxRef.current = new AudioContext();
+        } else {
+           return;
+        }
+      }
+
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
