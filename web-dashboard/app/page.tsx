@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, onSnapshot, where, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,16 +20,6 @@ interface Signal {
   created_at: { seconds: number } | null;
 }
 
-interface Trade {
-  id: string;
-  symbol: string;
-  type: string;
-  price: number;
-  amount: number;
-  profit?: number;
-  created_at: { seconds: number } | null;
-}
-
 interface PortfolioStats {
   totalTrades: number;
   winRate: number;
@@ -41,8 +31,40 @@ interface PortfolioStats {
   symbolStats: Record<string, { buys: number; sells: number; neutral: number }>;
 }
 
+interface Portfolio {
+  balance: number;
+  initial_balance: number;
+  total_trades: number;
+  winning_trades: number;
+  losing_trades: number;
+  total_profit: number;
+  positions: Record<string, { amount: number; entry_price: number }>;
+}
+
+interface TradeRecord {
+  id: string;
+  type: string;
+  symbol: string;
+  price: number;
+  amount: number;
+  value: number;
+  profit?: number;
+  profit_pct?: number;
+  created_at: { seconds: number } | null;
+}
+
 export default function Dashboard() {
   const [signals, setSignals] = useState<Signal[]>([]);
+  const [trades, setTrades] = useState<TradeRecord[]>([]);
+  const [portfolio, setPortfolio] = useState<Portfolio>({
+    balance: 1000,
+    initial_balance: 1000,
+    total_trades: 0,
+    winning_trades: 0,
+    losing_trades: 0,
+    total_profit: 0,
+    positions: {},
+  });
   const [stats, setStats] = useState({
     active_signals: 0,
     buy_signals: 0,
@@ -178,7 +200,36 @@ export default function Dashboard() {
       });
     });
 
-    return () => unsubscribe();
+    // Listen to portfolio updates
+    const portfolioUnsub = onSnapshot(
+      collection(db, "portfolios"),
+      (snapshot) => {
+        snapshot.forEach((doc) => {
+          const data = doc.data() as Portfolio;
+          setPortfolio(data);
+        });
+      }
+    );
+
+    // Listen to recent trades
+    const tradesQuery = query(
+      collection(db, "trades"),
+      orderBy("created_at", "desc"),
+      limit(20)
+    );
+    const tradesUnsub = onSnapshot(tradesQuery, (snapshot) => {
+      const tradesList: TradeRecord[] = [];
+      snapshot.forEach((doc) => {
+        tradesList.push({ ...doc.data(), id: doc.id } as TradeRecord);
+      });
+      setTrades(tradesList);
+    });
+
+    return () => {
+      unsubscribe();
+      portfolioUnsub();
+      tradesUnsub();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastSignalCount]);
 
@@ -243,7 +294,65 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* PORTFOLIO OVERVIEW CARDS - NEW! */}
+          {/* PORTFOLIO VALUE CARD - MAIN */}
+          <Card className="bg-gradient-to-br from-emerald-900/40 to-green-900/20 border-emerald-700/30 backdrop-blur-xl shadow-2xl">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 bg-emerald-500/20 rounded-2xl">
+                    <Wallet className="h-8 w-8 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-sm">Portfolio Value</p>
+                    <div className="text-4xl font-bold text-white">
+                      ${portfolio.balance.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-6 text-center">
+                  <div>
+                    <p className="text-slate-400 text-xs">P&L</p>
+                    <div className={`text-2xl font-bold ${portfolio.total_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {portfolio.total_profit >= 0 ? '+' : ''}${portfolio.total_profit.toFixed(2)}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-xs">ROI</p>
+                    <div className={`text-2xl font-bold ${portfolio.total_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {((portfolio.balance - portfolio.initial_balance) / portfolio.initial_balance * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-xs">Win Rate</p>
+                    <div className="text-2xl font-bold text-cyan-400">
+                      {portfolio.total_trades > 0 ? ((portfolio.winning_trades / portfolio.total_trades) * 100).toFixed(0) : 0}%
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-xs">Trades</p>
+                    <div className="text-2xl font-bold text-violet-400">
+                      {portfolio.total_trades}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Open Positions */}
+              {Object.keys(portfolio.positions).length > 0 && (
+                <div className="mt-4 pt-4 border-t border-slate-700/50">
+                  <p className="text-slate-400 text-xs mb-2">Open Positions</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(portfolio.positions).map(([symbol, pos]) => (
+                      <Badge key={symbol} className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                        {symbol.replace("/USDT", "")} @ ${pos.entry_price.toFixed(4)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* PORTFOLIO OVERVIEW CARDS */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Total Signals */}
             <Card className="bg-gradient-to-br from-violet-900/40 to-purple-900/20 border-violet-700/30 backdrop-blur-xl">
@@ -477,10 +586,74 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+          {/* RECENT TRADES */}
+          {trades.length > 0 && (
+            <Card className="bg-gradient-to-br from-slate-900/90 to-slate-800/50 border-slate-700/50 backdrop-blur-xl shadow-2xl overflow-hidden">
+              <CardHeader className="border-b border-slate-700/50">
+                <CardTitle className="text-xl text-white flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-emerald-400" />
+                  Recent Trades
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-slate-700/50 hover:bg-transparent">
+                        <TableHead className="text-slate-400 font-semibold">Time</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">Type</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">Symbol</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">Price</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">Amount</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">Value</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">P&L</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {trades.slice(0, 10).map((t) => (
+                        <TableRow key={t.id} className="border-slate-700/30 hover:bg-slate-800/50">
+                          <TableCell className="font-mono text-slate-500 text-xs">
+                            {t.created_at?.seconds 
+                              ? new Date(t.created_at.seconds * 1000).toLocaleString() 
+                              : 'Just now'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`${t.type === 'BUY' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                              {t.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-bold text-white">
+                            {t.symbol.replace("/USDT", "")}
+                          </TableCell>
+                          <TableCell className="font-mono text-white">
+                            ${t.price < 1 ? t.price.toFixed(6) : t.price.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="font-mono text-slate-400">
+                            {t.amount.toFixed(4)}
+                          </TableCell>
+                          <TableCell className="font-mono text-white">
+                            ${t.value.toFixed(2)}
+                          </TableCell>
+                          <TableCell className={`font-mono font-bold ${t.profit !== undefined ? (t.profit >= 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500'}`}>
+                            {t.profit !== undefined ? (
+                              <>
+                                {t.profit >= 0 ? '+' : ''}${t.profit.toFixed(2)}
+                                <span className="text-xs ml-1">({t.profit_pct?.toFixed(1)}%)</span>
+                              </>
+                            ) : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* FOOTER */}
           <div className="text-center text-slate-600 text-xs py-4">
-            <p>TrAIder AI Trading System • Powered by 394 Adaptive AI Models</p>
+            <p>TrAIder AI Trading System • Paper Trading with $1000 Initial Capital</p>
             <p className="mt-1">Last Updated: {new Date().toLocaleString()}</p>
           </div>
 

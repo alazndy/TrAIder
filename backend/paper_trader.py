@@ -75,13 +75,20 @@ def train_models():
     print("\n[+] All systems ready. Run with --live to start trading.")
 
 def run_live_cycle():
+    from portfolio_manager import get_portfolio_manager
+    
     print("\n" + "="*60)
     print(f"📡 PAPER TRADING LIVE START: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*60)
     
+    # Initialize portfolio manager
+    pm = get_portfolio_manager()
+    portfolio_stats = pm.get_stats()
+    print(f"[PORTFOLIO] Balance: ${portfolio_stats['balance']:.2f} | Trades: {portfolio_stats['total_trades']} | Win Rate: {portfolio_stats['win_rate']:.1f}%")
+    
     macro_df = fetch_macro_data() # Refresh macro once per cycle
     
-    portfolio_value = 0
+    current_prices = {}
     signals = []
     
     for item in PAPER_PORTFOLIO:
@@ -115,6 +122,8 @@ def run_live_cycle():
         mode = result.get('mode', 'unknown')
         price = full_df['close'].iloc[-1]
         
+        current_prices[sym] = price
+        
         # Log
         print(f"  {sym:<10} | {strat_name:<11} | {signal:<6} ({conf:>5.1f}%) | ${price:<8.4f} | {desc}")
         
@@ -132,7 +141,15 @@ def run_live_cycle():
         signals.append(signal_record)
         save_signal_to_db(signal_record)
         
+        # 4. Execute Paper Trade
+        pm.execute_trade(sym, signal, price, conf)
+        
+    # Save portfolio snapshot
+    if current_prices:
+        pm.save_snapshot(current_prices)
+    
     print("-" * 60)
+
     print("Waiting for next cycle...")
 
 if __name__ == "__main__":
