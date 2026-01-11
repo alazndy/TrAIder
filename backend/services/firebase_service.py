@@ -18,15 +18,33 @@ class FirebaseService:
                 self.db = firestore.client()
                 return
 
+            # 1. Check for legacy FIREBASE_CREDENTIALS path or file
             cred_path = os.getenv("FIREBASE_CREDENTIALS", "serviceAccountKey.json")
             
-            if os.path.exists(cred_path):
+            # 2. Check for JSON Content in Env Var (Render Support)
+            env_creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
+            
+            cred = None
+            if env_creds_json:
+                try:
+                    import json
+                    if env_creds_json.startswith("'") and env_creds_json.endswith("'"):
+                        env_creds_json = env_creds_json[1:-1]
+                    cred_dict = json.loads(env_creds_json)
+                    cred = credentials.Certificate(cred_dict)
+                    print("[Firebase] Loaded credentials from FIREBASE_CREDENTIALS_JSON")
+                except Exception as e:
+                    print(f"[Firebase] Failed to parse env var credentials: {e}")
+
+            if not cred and os.path.exists(cred_path):
                 cred = credentials.Certificate(cred_path)
+                print(f"[Firebase] Loaded credentials from file: {cred_path}")
+
+            if cred:
                 firebase_admin.initialize_app(cred)
-                print(f"[Firebase] Initialized with {cred_path}")
             else:
                 # Try default credentials (useful for Cloud Run)
-                print("[Firebase] No serviceAccountKey.json found, trying default credentials...")
+                print("[Firebase] No credentials found, trying default credentials...")
                 firebase_admin.initialize_app()
                 
             self.db = firestore.client()

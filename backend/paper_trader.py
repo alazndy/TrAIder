@@ -18,25 +18,49 @@ from firebase_admin import credentials, firestore
 if not firebase_admin._apps:
     try:
         import os
-        if os.path.exists("serviceAccountKey.json"):
-            cred_path = "serviceAccountKey.json"
-        elif os.path.exists("backend/serviceAccountKey.json"):
-            cred_path = "backend/serviceAccountKey.json"
-        else:
-            cred_path = None
-            
-        if cred_path:
-            cred = credentials.Certificate(cred_path)
+        import json
+        
+        cred = None
+        
+        # 1. Try Environment Variable (Render / Cloud)
+        env_creds = os.environ.get("FIREBASE_CREDENTIALS_JSON")
+        if env_creds:
+            try:
+                # Handle potential quoting issues in env vars
+                if env_creds.startswith("'") and env_creds.endswith("'"):
+                    env_creds = env_creds[1:-1]
+                
+                cred_dict = json.loads(env_creds)
+                cred = credentials.Certificate(cred_dict)
+                print("[+] Firebase initialized with FIREBASE_CREDENTIALS_JSON env var.")
+            except Exception as e:
+                print(f"[!] Error parsing FIREBASE_CREDENTIALS_JSON: {e}")
+
+        # 2. Try Local File
+        if not cred:
+            if os.path.exists("serviceAccountKey.json"):
+                cred_path = "serviceAccountKey.json"
+            elif os.path.exists("backend/serviceAccountKey.json"):
+                cred_path = "backend/serviceAccountKey.json"
+            else:
+                cred_path = None
+                
+            if cred_path:
+                cred = credentials.Certificate(cred_path)
+                print(f"[+] Firebase initialized with file: {cred_path}")
+
+        # 3. Initialize App
+        if cred:
             firebase_admin.initialize_app(cred, {
                 'storageBucket': 'tr-ai-der.firebasestorage.app'
             })
-            print("[+] Firebase initialized with credentials file.")
         else:
-            # Fallback to default credentials (local dev)
+            # Fallback to default credentials (GCP Cloud Run / Functions)
             firebase_admin.initialize_app(options={
                 'storageBucket': 'tr-ai-der.firebasestorage.app'
             })
-            print("[+] Firebase initialized with default credentials.")
+            print("[+] Firebase initialized with default credentials (GCP environment detected).")
+            
     except Exception as e:
         print(f"[!] Firebase initialization failed: {e}")
 

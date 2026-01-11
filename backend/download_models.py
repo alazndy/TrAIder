@@ -19,14 +19,33 @@ def download_models():
     try:
         # Initialize Firebase with explicit credentials if not already done
         if not firebase_admin._apps:
-            # Try to find credentials file
-            cred_path = "serviceAccountKey.json"
-            if os.path.exists(cred_path):
-                cred = credentials.Certificate(cred_path)
+            # 1. Check for JSON Content in Env Var (Render Support)
+            import json
+            env_creds_json = os.environ.get("FIREBASE_CREDENTIALS_JSON")
+            cred = None
+            
+            if env_creds_json:
+                try:
+                    if env_creds_json.startswith("'") and env_creds_json.endswith("'"):
+                        env_creds_json = env_creds_json[1:-1]
+                    cred_dict = json.loads(env_creds_json)
+                    cred = credentials.Certificate(cred_dict)
+                    print("[MODEL_SYNC] Loaded credentials from FIREBASE_CREDENTIALS_JSON")
+                except Exception as e:
+                    print(f"[MODEL_SYNC] Failed to parse env var credentials: {e}")
+            
+            # 2. Check for File
+            if not cred:
+                cred_path = "serviceAccountKey.json"
+                if os.path.exists(cred_path):
+                    cred = credentials.Certificate(cred_path)
+                    print("[MODEL_SYNC] Firebase initialized with credentials file.")
+
+            # 3. Init App
+            if cred:
                 firebase_admin.initialize_app(cred, {
                     'storageBucket': 'tr-ai-der.firebasestorage.app'
                 })
-                print("[MODEL_SYNC] Firebase initialized with credentials file.")
             else:
                 # Try default credentials (Cloud Run, etc)
                 firebase_admin.initialize_app(options={
