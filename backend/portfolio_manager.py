@@ -45,7 +45,14 @@ class PortfolioManager:
     
     def get_portfolio(self) -> Dict:
         """Get current portfolio state."""
-        doc = self.db.collection('portfolios').document(self.portfolio_id).get()
+        doc_ref = self.db.collection('portfolios').document(self.portfolio_id)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            print(f"[PORTFOLIO] Warning: Portfolio document missing. Re-initializing...")
+            self._init_portfolio()
+            doc = doc_ref.get()
+            
         return doc.to_dict() if doc.exists else {}
     
     def get_balance(self) -> float:
@@ -81,6 +88,7 @@ class PortfolioManager:
         
         # Only trade on high confidence signals
         if confidence < 60:
+            print(f"  [SKIP] {signal} {symbol}: Confidence {confidence:.1f}% < 60%")
             return None
         
         portfolio = self.get_portfolio()
@@ -93,6 +101,7 @@ class PortfolioManager:
             # Calculate position size (10% of balance)
             trade_amount = balance * self.POSITION_SIZE_PCT
             if trade_amount < 10:  # Minimum $10 trade
+                print(f"  [SKIP] BUY {symbol}: Insufficient balance for min trade (${balance:.2f})")
                 return None
             
             amount = trade_amount / price
