@@ -467,6 +467,17 @@ export default function Dashboard() {
               >
                 {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
               </button>
+
+              {/* Sound Test Button (Mobile Fix) */}
+              {soundEnabled && (
+                <button
+                  onClick={() => playAdaptiveSound('BUY', 100, 'TEST')}
+                  className="p-2 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 md:hidden"
+                  title="Test Sesi Çal"
+                >
+                  <Activity className="h-5 w-5" />
+                </button>
+              )}
               
               <Badge variant="outline" className="text-green-400 border-green-400/50 bg-green-500/10 animate-pulse px-3 py-1">
                 <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2 animate-ping" />
