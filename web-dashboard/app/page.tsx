@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useRef } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, where, Timestamp } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Activity, TrendingUp, TrendingDown, Zap, Bell, BellOff, Volume2, VolumeX } from "lucide-react";
+import { Activity, TrendingUp, TrendingDown, Zap, Bell, BellOff, Volume2, VolumeX, Wallet, Target, BarChart3, PieChart } from "lucide-react";
 
 interface Signal {
   id: string;
@@ -20,12 +20,43 @@ interface Signal {
   created_at: { seconds: number } | null;
 }
 
+interface Trade {
+  id: string;
+  symbol: string;
+  type: string;
+  price: number;
+  amount: number;
+  profit?: number;
+  created_at: { seconds: number } | null;
+}
+
+interface PortfolioStats {
+  totalTrades: number;
+  winRate: number;
+  totalProfit: number;
+  todayProfit: number;
+  avgConfidence: number;
+  bestSymbol: string;
+  worstSymbol: string;
+  symbolStats: Record<string, { buys: number; sells: number; neutral: number }>;
+}
+
 export default function Dashboard() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [stats, setStats] = useState({
     active_signals: 0,
     buy_signals: 0,
     sell_signals: 0,
+  });
+  const [portfolioStats, setPortfolioStats] = useState<PortfolioStats>({
+    totalTrades: 0,
+    winRate: 0,
+    totalProfit: 0,
+    todayProfit: 0,
+    avgConfidence: 0,
+    bestSymbol: "-",
+    worstSymbol: "-",
+    symbolStats: {},
   });
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -64,19 +95,31 @@ export default function Dashboard() {
     const q = query(
       collection(db, "signals"),
       orderBy("created_at", "desc"),
-      limit(20)
+      limit(100) // Get more signals for stats
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs: Signal[] = [];
       let buy = 0;
       let sell = 0;
+      let totalConfidence = 0;
+      const symbolStats: Record<string, { buys: number; sells: number; neutral: number }> = {};
 
       snapshot.forEach((doc) => {
         const data = doc.data() as Signal;
         msgs.push({ ...data, id: doc.id });
+        
         if (data.signal === "BUY") buy++;
         if (data.signal === "SELL") sell++;
+        totalConfidence += data.confidence || 0;
+
+        // Track symbol stats
+        if (!symbolStats[data.symbol]) {
+          symbolStats[data.symbol] = { buys: 0, sells: 0, neutral: 0 };
+        }
+        if (data.signal === "BUY") symbolStats[data.symbol].buys++;
+        else if (data.signal === "SELL") symbolStats[data.symbol].sells++;
+        else symbolStats[data.symbol].neutral++;
       });
 
       // Check for new signals
@@ -90,11 +133,48 @@ export default function Dashboard() {
       }
       setLastSignalCount(msgs.length);
 
-      setSignals(msgs);
+      // Calculate portfolio stats
+      const avgConfidence = msgs.length > 0 ? totalConfidence / msgs.length : 0;
+      
+      // Find best/worst symbols
+      let bestSymbol = "-";
+      let worstSymbol = "-";
+      let maxBuys = 0;
+      let maxSells = 0;
+
+      Object.entries(symbolStats).forEach(([symbol, stats]) => {
+        if (stats.buys > maxBuys) {
+          maxBuys = stats.buys;
+          bestSymbol = symbol.replace("/USDT", "");
+        }
+        if (stats.sells > maxSells) {
+          maxSells = stats.sells;
+          worstSymbol = symbol.replace("/USDT", "");
+        }
+      });
+
+      // Today's signals
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todaySignals = msgs.filter(s => 
+        s.created_at && s.created_at.seconds * 1000 >= today.getTime()
+      );
+
+      setSignals(msgs.slice(0, 20)); // Show only last 20 in table
       setStats({
         active_signals: msgs.length,
         buy_signals: buy,
         sell_signals: sell,
+      });
+      setPortfolioStats({
+        totalTrades: msgs.length,
+        winRate: msgs.length > 0 ? (buy / msgs.length) * 100 : 0,
+        totalProfit: 0, // Would come from trades collection
+        todayProfit: todaySignals.length,
+        avgConfidence,
+        bestSymbol,
+        worstSymbol,
+        symbolStats,
       });
     });
 
@@ -109,8 +189,6 @@ export default function Dashboard() {
       default: return "from-slate-500 to-slate-600";
     }
   };
-
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-50">
@@ -165,7 +243,58 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* STATS CARDS */}
+          {/* PORTFOLIO OVERVIEW CARDS - NEW! */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Total Signals */}
+            <Card className="bg-gradient-to-br from-violet-900/40 to-purple-900/20 border-violet-700/30 backdrop-blur-xl">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-medium text-slate-400">Total Signals</CardTitle>
+                <BarChart3 className="h-4 w-4 text-violet-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-violet-300">{portfolioStats.totalTrades}</div>
+                <p className="text-xs text-slate-500">All time</p>
+              </CardContent>
+            </Card>
+
+            {/* Win Rate */}
+            <Card className="bg-gradient-to-br from-cyan-900/40 to-blue-900/20 border-cyan-700/30 backdrop-blur-xl">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-medium text-slate-400">Buy Rate</CardTitle>
+                <Target className="h-4 w-4 text-cyan-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-cyan-300">{portfolioStats.winRate.toFixed(1)}%</div>
+                <p className="text-xs text-slate-500">Buy vs Total</p>
+              </CardContent>
+            </Card>
+
+            {/* Average Confidence */}
+            <Card className="bg-gradient-to-br from-amber-900/40 to-orange-900/20 border-amber-700/30 backdrop-blur-xl">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-medium text-slate-400">Avg Confidence</CardTitle>
+                <PieChart className="h-4 w-4 text-amber-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-300">{portfolioStats.avgConfidence.toFixed(1)}%</div>
+                <p className="text-xs text-slate-500">Model certainty</p>
+              </CardContent>
+            </Card>
+
+            {/* Today's Activity */}
+            <Card className="bg-gradient-to-br from-pink-900/40 to-rose-900/20 border-pink-700/30 backdrop-blur-xl">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-medium text-slate-400">Today</CardTitle>
+                <Wallet className="h-4 w-4 text-pink-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-pink-300">{portfolioStats.todayProfit}</div>
+                <p className="text-xs text-slate-500">Signals today</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* MAIN STATS CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Recent Activity Card */}
             <Card className="bg-gradient-to-br from-slate-900/90 to-slate-800/50 border-slate-700/50 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02]">
@@ -179,14 +308,14 @@ export default function Dashboard() {
                 <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                   {stats.active_signals}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Signals in last cycle</p>
+                <p className="text-xs text-slate-500 mt-1">Signals in feed</p>
               </CardContent>
             </Card>
 
             {/* Buy Opportunities Card */}
             <Card className="bg-gradient-to-br from-slate-900/90 to-emerald-900/20 border-emerald-700/30 backdrop-blur-xl shadow-xl hover:shadow-emerald-500/10 transition-all hover:scale-[1.02]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-300">Buy Opportunities</CardTitle>
+                <CardTitle className="text-sm font-medium text-slate-300">Buy Signals</CardTitle>
                 <div className="p-2 bg-emerald-500/20 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-emerald-400" />
                 </div>
@@ -195,14 +324,16 @@ export default function Dashboard() {
                 <div className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
                   {stats.buy_signals}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Actionable Buys</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Best: <span className="text-emerald-400 font-semibold">{portfolioStats.bestSymbol}</span>
+                </p>
               </CardContent>
             </Card>
 
             {/* Sell Warnings Card */}
             <Card className="bg-gradient-to-br from-slate-900/90 to-rose-900/20 border-rose-700/30 backdrop-blur-xl shadow-xl hover:shadow-rose-500/10 transition-all hover:scale-[1.02]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-300">Sell Warnings</CardTitle>
+                <CardTitle className="text-sm font-medium text-slate-300">Sell Signals</CardTitle>
                 <div className="p-2 bg-rose-500/20 rounded-lg">
                   <TrendingDown className="h-5 w-5 text-rose-400" />
                 </div>
@@ -211,10 +342,43 @@ export default function Dashboard() {
                 <div className="text-4xl font-bold bg-gradient-to-r from-rose-400 to-red-400 bg-clip-text text-transparent">
                   {stats.sell_signals}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Protective Exits</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Watch: <span className="text-rose-400 font-semibold">{portfolioStats.worstSymbol}</span>
+                </p>
               </CardContent>
             </Card>
           </div>
+
+          {/* SYMBOL BREAKDOWN - NEW! */}
+          {Object.keys(portfolioStats.symbolStats).length > 0 && (
+            <Card className="bg-gradient-to-br from-slate-900/90 to-slate-800/50 border-slate-700/50 backdrop-blur-xl">
+              <CardHeader>
+                <CardTitle className="text-lg text-white flex items-center gap-2">
+                  <PieChart className="h-5 w-5 text-violet-400" />
+                  Symbol Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                  {Object.entries(portfolioStats.symbolStats).slice(0, 8).map(([symbol, stats]) => (
+                    <div key={symbol} className="bg-slate-800/50 rounded-lg p-3 text-center">
+                      <div className="font-bold text-white text-sm">{symbol.replace("/USDT", "")}</div>
+                      <div className="flex justify-center gap-2 mt-2 text-xs">
+                        <span className="text-emerald-400">{stats.buys}↑</span>
+                        <span className="text-rose-400">{stats.sells}↓</span>
+                      </div>
+                      <div className="mt-2 h-1 bg-slate-700 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400"
+                          style={{ width: `${(stats.buys / (stats.buys + stats.sells + stats.neutral || 1)) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* SIGNALS TABLE */}
           <Card className="bg-gradient-to-br from-slate-900/90 to-slate-800/50 border-slate-700/50 backdrop-blur-xl shadow-2xl overflow-hidden">
@@ -316,7 +480,7 @@ export default function Dashboard() {
 
           {/* FOOTER */}
           <div className="text-center text-slate-600 text-xs py-4">
-            <p>TrAIder AI Trading System • Powered by Adaptive AI Models</p>
+            <p>TrAIder AI Trading System • Powered by 394 Adaptive AI Models</p>
             <p className="mt-1">Last Updated: {new Date().toLocaleString()}</p>
           </div>
 
