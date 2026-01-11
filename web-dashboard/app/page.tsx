@@ -83,6 +83,7 @@ export default function Dashboard() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [lastSignalCount, setLastSignalCount] = useState(0);
+  const [systemLogs, setSystemLogs] = useState<Signal[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Restore settings from localStorage on mount
@@ -147,7 +148,10 @@ export default function Dashboard() {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs: Signal[] = [];
+      const allMsgs: Signal[] = [];
+      const tradeSignals: Signal[] = [];
+      const logs: Signal[] = [];
+
       let buy = 0;
       let sell = 0;
       let totalConfidence = 0;
@@ -155,34 +159,49 @@ export default function Dashboard() {
 
       snapshot.forEach((doc) => {
         const data = doc.data() as Signal;
-        msgs.push({ ...data, id: doc.id });
+        const signalItem = { ...data, id: doc.id };
+        allMsgs.push(signalItem);
         
-        if (data.signal === "BUY") buy++;
-        if (data.signal === "SELL") sell++;
-        totalConfidence += data.confidence || 0;
+        if (data.strategy === "HEARTBEAT") {
+          logs.push(signalItem);
+        } else {
+          tradeSignals.push(signalItem);
 
-        // Track symbol stats
-        if (!symbolStats[data.symbol]) {
-          symbolStats[data.symbol] = { buys: 0, sells: 0, neutral: 0 };
+          if (data.signal === "BUY") buy++;
+          if (data.signal === "SELL") sell++;
+          totalConfidence += data.confidence || 0;
+
+          // Track symbol stats
+          if (!symbolStats[data.symbol]) {
+            symbolStats[data.symbol] = { buys: 0, sells: 0, neutral: 0 };
+          }
+          if (data.signal === "BUY") symbolStats[data.symbol].buys++;
+          else if (data.signal === "SELL") symbolStats[data.symbol].sells++;
+          else symbolStats[data.symbol].neutral++;
         }
-        if (data.signal === "BUY") symbolStats[data.symbol].buys++;
-        else if (data.signal === "SELL") symbolStats[data.symbol].sells++;
-        else symbolStats[data.symbol].neutral++;
       });
 
-      // Check for new signals
-      if (msgs.length > lastSignalCount && lastSignalCount > 0) {
-        const newSignal = msgs[0];
-        playSound();
-        sendNotification(
-          `${newSignal.signal} Signal: ${newSignal.symbol}`,
-          `${newSignal.strategy} | Confidence: ${newSignal.confidence.toFixed(1)}% | $${newSignal.price.toFixed(4)}`
-        );
+      // Check for new signals (exclude heartbeats from notification logic if preferred, keeping simple for now)
+      // Only notify if new TRADING signals appeared
+      const newTradeSignalsCount = tradeSignals.length;
+      // We need a separate tracker for trade signals count to avoid notifying on Heartbeat
+      // But for simplicity, we'll just check if the top signal is not heartbeat and is new
+      
+      if (tradeSignals.length > 0 && lastSignalCount > 0 && tradeSignals.length > lastSignalCount) { // Simple check might be flawed if ratio changes, but works for append-only
+         const newSignal = tradeSignals[0];
+         // Basic debounce/check
+         if (newSignal.created_at && (!lastSignalCount || (allMsgs.length > lastSignalCount))) {
+            playSound();
+            sendNotification(
+              `${newSignal.signal} Signal: ${newSignal.symbol}`,
+              `${newSignal.strategy} | Confidence: ${newSignal.confidence.toFixed(1)}% | $${newSignal.price.toFixed(4)}`
+            );
+         }
       }
-      setLastSignalCount(msgs.length);
+      setLastSignalCount(tradeSignals.length);
 
       // Calculate portfolio stats
-      const avgConfidence = msgs.length > 0 ? totalConfidence / msgs.length : 0;
+      const avgConfidence = tradeSignals.length > 0 ? totalConfidence / tradeSignals.length : 0;
       
       // Find best/worst symbols
       let bestSymbol = "-";
@@ -204,19 +223,20 @@ export default function Dashboard() {
       // Today's signals
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todaySignals = msgs.filter(s => 
+      const todaySignals = tradeSignals.filter(s => 
         s.created_at && s.created_at.seconds * 1000 >= today.getTime()
       );
 
-      setSignals(msgs.slice(0, 20)); // Show only last 20 in table
+      setSignals(tradeSignals.slice(0, 20)); // Show only last 20 in table
+      setSystemLogs(logs.slice(0, 5)); // Keep last 5 logs
       setStats({
-        active_signals: msgs.length,
+        active_signals: tradeSignals.length,
         buy_signals: buy,
         sell_signals: sell,
       });
       setPortfolioStats({
-        totalTrades: msgs.length,
-        winRate: msgs.length > 0 ? (buy / msgs.length) * 100 : 0,
+        totalTrades: tradeSignals.length,
+        winRate: tradeSignals.length > 0 ? (buy / tradeSignals.length) * 100 : 0,
         totalProfit: 0, // Would come from trades collection
         todayProfit: todaySignals.length,
         avgConfidence,
@@ -238,7 +258,9 @@ export default function Dashboard() {
         });
       },
       (error) => {
+        // PERMISSION ERROR HANDLING
         console.error("Error fetching portfolio:", error);
+        // We can optionally show a toast or silent fail
       }
     );
 
@@ -264,7 +286,7 @@ export default function Dashboard() {
       tradesUnsub();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastSignalCount]);
+  }, []);
 
   const getSignalColor = (signal: string) => {
     switch (signal) {
@@ -785,6 +807,33 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           )}
+
+          {/* LOGS TERMINAL */}
+          <Card className="bg-slate-950/80 border-slate-800/50 backdrop-blur-xl shadow-2xl font-mono overflow-hidden">
+            <CardHeader className="border-b border-slate-800 py-3">
+              <CardTitle className="text-sm text-slate-400 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                System Heartbeat & Logs
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 h-48 overflow-y-auto bg-black/50">
+              <div className="space-y-2">
+                {systemLogs.length === 0 ? (
+                  <p className="text-slate-600 text-xs text-center pt-8">Waiting for heartbeat...</p>
+                ) : (
+                  systemLogs.map((log, i) => (
+                    <div key={log.id} className="text-xs flex gap-2 animate-in fade-in slide-in-from-left-2 items-start opacity-80 hover:opacity-100 transition-opacity">
+                      <span className="text-slate-500 shrink-0">
+                        [{log.created_at?.seconds ? new Date(log.created_at.seconds * 1000).toLocaleTimeString() : 'Now'}]
+                      </span>
+                      <span className="text-emerald-400/90">&gt;</span>
+                      <span className="text-slate-300 break-words">{log.desc}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* FOOTER */}
           <div className="text-center text-slate-600 text-xs py-4">

@@ -148,6 +148,27 @@ def run_live_cycle():
     if current_prices:
         pm.save_snapshot(current_prices)
     
+    # Send Heartbeat / System Log
+    try:
+        log_msg = f"Scan complete. {len(signals)} opportunities found. Portfolio: ${portfolio_stats['balance']:.0f}"
+        heartbeat = {
+            "symbol": "SYSTEM",
+            "strategy": "HEARTBEAT",
+            "signal": "INFO",
+            "confidence": 100.0,
+            "price": 0.0,
+            "mode": "system",
+            "desc": log_msg,
+            "is_paper": True,
+            "timestamp": firestore.SERVER_TIMESTAMP,
+            "created_at": datetime.now()
+        }
+        db = firestore.client()
+        db.collection('signals').add(heartbeat)
+        print(f"  [Heartbeat] {log_msg}")
+    except Exception as e:
+        print(f"  [!] Heartbeat failed: {e}")
+
     print("-" * 60)
 
     print("Waiting for next cycle...")

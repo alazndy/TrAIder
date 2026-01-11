@@ -4,15 +4,26 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // Signals Collection:
-    // - READ: Allowed for everyone (Dashboard needs this)
-    // - WRITE: Denied for public (Only Backend Admin SDK can write)
     match /signals/{signalId} {
       allow read: if true;
       allow write: if false;
     }
 
+    // Trades Collection (New):
+    // - READ: Allowed for everyone (Dashboard needs this)
+    match /trades/{tradeId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Portfolios Collection (New):
+    // - READ: Allowed for everyone (Dashboard needs this)
+    match /portfolios/{portfolioId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // System Logs:
-    // - Deny all public access
     match /system_logs/{logId} {
       allow read, write: if false;
     }
