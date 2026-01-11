@@ -294,59 +294,161 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* PORTFOLIO VALUE CARD - MAIN */}
+          {/* PORTFOLIO VALUE CARD - ENHANCED */}
           <Card className="bg-gradient-to-br from-emerald-900/40 to-green-900/20 border-emerald-700/30 backdrop-blur-xl shadow-2xl">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-4 bg-emerald-500/20 rounded-2xl">
-                    <Wallet className="h-8 w-8 text-emerald-400" />
+            <CardContent className="p-4 md:p-6">
+              {/* Main Stats Row - Mobile Responsive */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
+                {/* Total Portfolio Value */}
+                <div className="col-span-2 md:col-span-1 flex items-center gap-3">
+                  <div className="p-3 bg-emerald-500/20 rounded-xl">
+                    <Wallet className="h-6 w-6 text-emerald-400" />
                   </div>
                   <div>
-                    <p className="text-slate-400 text-sm">Portfolio Value</p>
-                    <div className="text-4xl font-bold text-white">
-                      ${portfolio.balance.toFixed(2)}
+                    <p className="text-slate-400 text-xs">Portfolio Value</p>
+                    <div className="text-2xl md:text-3xl font-bold text-white">
+                      ${(portfolio.balance + Object.values(portfolio.positions).reduce((sum, pos) => sum + (pos.amount * pos.entry_price), 0)).toFixed(2)}
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-6 text-center">
-                  <div>
-                    <p className="text-slate-400 text-xs">P&L</p>
-                    <div className={`text-2xl font-bold ${portfolio.total_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {portfolio.total_profit >= 0 ? '+' : ''}${portfolio.total_profit.toFixed(2)}
-                    </div>
+
+                {/* Liquid Cash */}
+                <div className="text-center md:text-left">
+                  <p className="text-slate-400 text-xs">💵 Liquid Cash</p>
+                  <div className="text-xl md:text-2xl font-bold text-green-400">
+                    ${portfolio.balance.toFixed(2)}
                   </div>
-                  <div>
-                    <p className="text-slate-400 text-xs">ROI</p>
-                    <div className={`text-2xl font-bold ${portfolio.total_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {((portfolio.balance - portfolio.initial_balance) / portfolio.initial_balance * 100).toFixed(1)}%
-                    </div>
+                  <p className="text-xs text-slate-500">Available</p>
+                </div>
+
+                {/* P&L */}
+                <div className="text-center md:text-left">
+                  <p className="text-slate-400 text-xs">📈 P&L</p>
+                  <div className={`text-xl md:text-2xl font-bold ${portfolio.total_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {portfolio.total_profit >= 0 ? '+' : ''}${portfolio.total_profit.toFixed(2)}
                   </div>
-                  <div>
-                    <p className="text-slate-400 text-xs">Win Rate</p>
-                    <div className="text-2xl font-bold text-cyan-400">
-                      {portfolio.total_trades > 0 ? ((portfolio.winning_trades / portfolio.total_trades) * 100).toFixed(0) : 0}%
-                    </div>
+                  <p className={`text-xs ${portfolio.total_profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    {((portfolio.balance - portfolio.initial_balance) / portfolio.initial_balance * 100).toFixed(1)}% ROI
+                  </p>
+                </div>
+
+                {/* Win Rate */}
+                <div className="text-center md:text-left">
+                  <p className="text-slate-400 text-xs">🎯 Win Rate</p>
+                  <div className="text-xl md:text-2xl font-bold text-cyan-400">
+                    {portfolio.total_trades > 0 ? ((portfolio.winning_trades / portfolio.total_trades) * 100).toFixed(0) : 0}%
                   </div>
-                  <div>
-                    <p className="text-slate-400 text-xs">Trades</p>
-                    <div className="text-2xl font-bold text-violet-400">
-                      {portfolio.total_trades}
-                    </div>
+                  <p className="text-xs text-slate-500">{portfolio.winning_trades}W / {portfolio.losing_trades}L</p>
+                </div>
+
+                {/* Trades */}
+                <div className="text-center md:text-left">
+                  <p className="text-slate-400 text-xs">📊 Total Trades</p>
+                  <div className="text-xl md:text-2xl font-bold text-violet-400">
+                    {portfolio.total_trades}
+                  </div>
+                  <p className="text-xs text-slate-500">Completed</p>
+                </div>
+              </div>
+
+              {/* Allocation Bar */}
+              <div className="mt-6">
+                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Portfolio Allocation</span>
+                  <span>
+                    Cash: {((portfolio.balance / portfolio.initial_balance) * 100).toFixed(0)}% | 
+                    Invested: {((Object.values(portfolio.positions).reduce((sum, pos) => sum + (pos.amount * pos.entry_price), 0) / portfolio.initial_balance) * 100).toFixed(0)}%
+                  </span>
+                </div>
+                <div className="h-3 bg-slate-700 rounded-full overflow-hidden flex">
+                  <div 
+                    className="bg-gradient-to-r from-green-500 to-emerald-400 transition-all duration-500"
+                    style={{ width: `${(portfolio.balance / portfolio.initial_balance) * 100}%` }}
+                  />
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500"
+                    style={{ width: `${(Object.values(portfolio.positions).reduce((sum, pos) => sum + (pos.amount * pos.entry_price), 0) / portfolio.initial_balance) * 100}%` }}
+                  />
+                </div>
+                <div className="flex gap-4 mt-2 text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-400" />
+                    <span className="text-slate-400">Cash</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400" />
+                    <span className="text-slate-400">Invested</span>
                   </div>
                 </div>
               </div>
-              {/* Open Positions */}
-              {Object.keys(portfolio.positions).length > 0 && (
-                <div className="mt-4 pt-4 border-t border-slate-700/50">
-                  <p className="text-slate-400 text-xs mb-2">Open Positions</p>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(portfolio.positions).map(([symbol, pos]) => (
-                      <Badge key={symbol} className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-                        {symbol.replace("/USDT", "")} @ ${pos.entry_price.toFixed(4)}
-                      </Badge>
-                    ))}
+
+              {/* Open Positions Table */}
+              {Object.keys(portfolio.positions).length > 0 ? (
+                <div className="mt-6 pt-4 border-t border-slate-700/50">
+                  <p className="text-white font-semibold mb-3 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-blue-400" />
+                    Open Positions ({Object.keys(portfolio.positions).length})
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-slate-400 text-xs border-b border-slate-700/50">
+                          <th className="text-left py-2">Coin</th>
+                          <th className="text-right py-2">Amount</th>
+                          <th className="text-right py-2">Entry Price</th>
+                          <th className="text-right py-2">Value</th>
+                          <th className="text-right py-2 hidden md:table-cell">% of Portfolio</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(portfolio.positions).map(([symbol, pos]) => {
+                          const value = pos.amount * pos.entry_price;
+                          const pctOfPortfolio = (value / portfolio.initial_balance) * 100;
+                          return (
+                            <tr key={symbol} className="border-b border-slate-700/30 hover:bg-slate-800/30">
+                              <td className="py-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-xs">
+                                    {symbol.replace("/USDT", "").slice(0, 3)}
+                                  </div>
+                                  <div>
+                                    <div className="font-semibold text-white">{symbol.replace("/USDT", "")}</div>
+                                    <div className="text-xs text-slate-500">USDT</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="text-right py-3 font-mono text-white">
+                                {pos.amount.toFixed(4)}
+                              </td>
+                              <td className="text-right py-3 font-mono text-slate-300">
+                                ${pos.entry_price < 1 ? pos.entry_price.toFixed(6) : pos.entry_price.toFixed(2)}
+                              </td>
+                              <td className="text-right py-3 font-mono text-white font-semibold">
+                                ${value.toFixed(2)}
+                              </td>
+                              <td className="text-right py-3 hidden md:table-cell">
+                                <div className="flex items-center justify-end gap-2">
+                                  <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-blue-500 rounded-full"
+                                      style={{ width: `${Math.min(pctOfPortfolio, 100)}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-blue-400 text-xs w-12">{pctOfPortfolio.toFixed(1)}%</span>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
+                </div>
+              ) : (
+                <div className="mt-6 pt-4 border-t border-slate-700/50 text-center py-6">
+                  <Wallet className="h-12 w-12 text-slate-600 mx-auto mb-2" />
+                  <p className="text-slate-500 text-sm">No open positions</p>
+                  <p className="text-slate-600 text-xs">Waiting for high-confidence BUY signals...</p>
                 </div>
               )}
             </CardContent>
