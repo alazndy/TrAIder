@@ -17,15 +17,22 @@ from firebase_admin import credentials, firestore
 # Initialize Firebase (Check if already initialized)
 if not firebase_admin._apps:
     try:
-        # Auto-discovery for Cloud Run or local GOOGLE_APPLICATION_CREDENTIALS
-        firebase_admin.initialize_app(options={
-            'storageBucket': 'tr-ai-der.firebasestorage.app'
-        })
-        print("[+] Firebase initialized successfully.")
+        import os
+        cred_path = "serviceAccountKey.json"
+        if os.path.exists(cred_path):
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred, {
+                'storageBucket': 'tr-ai-der.firebasestorage.app'
+            })
+            print("[+] Firebase initialized with credentials file.")
+        else:
+            # Fallback to default credentials (local dev)
+            firebase_admin.initialize_app(options={
+                'storageBucket': 'tr-ai-der.firebasestorage.app'
+            })
+            print("[+] Firebase initialized with default credentials.")
     except Exception as e:
         print(f"[!] Firebase initialization failed: {e}")
-
-warnings.filterwarnings('ignore')
 
 def save_signal_to_db(signal_data):
     """Save signal to Firestore"""
