@@ -7,7 +7,7 @@ Uses Global Market Context (BTC Trend, VIX, DXY) to make decisions.
 from .adaptive_ai_enhanced import ProteusAI
 from typing import Dict, Any
 import pandas as pd
-import ta
+import ta_compat as ta
 import numpy as np
 
 class ProteusNeo(ProteusAI):

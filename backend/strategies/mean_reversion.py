@@ -1,7 +1,7 @@
 from .base import BaseStrategy
 from typing import Dict, Any
 import pandas as pd
-import ta
+import ta_compat as ta
 import numpy as np
 
 class MeanReversionStrategy(BaseStrategy):

@@ -1,7 +1,7 @@
 
 from .adaptive_ai import AdaptiveAIStrategy
 import pandas as pd
-import ta
+import ta_compat as ta
 import numpy as np
 
 

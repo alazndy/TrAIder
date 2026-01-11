@@ -146,7 +146,7 @@ class SimpleBacktester:
         return self.capital
 
     def _calculate_indicators(self, strategy, df):
-        import ta
+        import ta_compat as ta
         # Apply strategy logic to full DF
         df["fast_sma"] = ta.sma(df["close"], length=strategy.fast_period)
         df["slow_sma"] = ta.sma(df["close"], length=strategy.slow_period)

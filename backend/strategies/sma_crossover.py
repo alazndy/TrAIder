@@ -1,7 +1,7 @@
 from .base import BaseStrategy
 from typing import Dict, Any
 import pandas as pd
-import ta
+import ta_compat as ta
 
 class SMACrossoverStrategy(BaseStrategy):
     def __init__(self, parameters: Dict[str, Any]):

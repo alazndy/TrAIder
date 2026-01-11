@@ -9,7 +9,7 @@ Her piyasa durumu icin ayri model egitir:
 from .base import BaseStrategy
 from typing import Dict, Any, List
 import pandas as pd
-import ta
+import ta_compat as ta
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.preprocessing import StandardScaler
