@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -377,18 +377,19 @@ export default function Dashboard() {
     });
 
     // Listen to portfolio updates
+    // Listen to specific portfolio document
     const portfolioUnsub = onSnapshot(
-      collection(db, "portfolios"),
-      (snapshot) => {
-        snapshot.forEach((doc) => {
-          const data = doc.data() as Portfolio;
+      doc(db, "portfolios", "live_portfolio_v1"),
+      (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const data = docSnapshot.data() as Portfolio;
           setPortfolio(data);
-        });
+        } else {
+          console.log("Waiting for portfolio initialization...");
+        }
       },
       (error) => {
-        // PERMISSION ERROR HANDLING
         console.error("Error fetching portfolio:", error);
-        // We can optionally show a toast or silent fail
       }
     );
 
