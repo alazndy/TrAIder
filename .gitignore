@@ -25,4 +25,3 @@ data/
 trades_log*.csv
 system_logs/
 serviceAccountKey.json
-*.json
