@@ -816,7 +816,7 @@ export default function Dashboard() {
                           <TableCell className="font-mono text-slate-500 text-xs">
                             {s.created_at?.seconds 
                               ? new Date(s.created_at.seconds * 1000).toLocaleTimeString() 
-                              : 'Just now'}
+                              : 'Şimdi'}
                           </TableCell>
                           <TableCell className="font-bold text-white text-lg">
                             {s.symbol.replace("/USDT", "")}
@@ -875,7 +875,7 @@ export default function Dashboard() {
               <CardHeader className="border-b border-slate-700/50">
                 <CardTitle className="text-xl text-white flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-emerald-400" />
-                  Recent Trades
+                  Son İşlemler
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -883,13 +883,13 @@ export default function Dashboard() {
                   <Table>
                     <TableHeader>
                       <TableRow className="border-slate-700/50 hover:bg-transparent">
-                        <TableHead className="text-slate-400 font-semibold">Time</TableHead>
-                        <TableHead className="text-slate-400 font-semibold">Type</TableHead>
-                        <TableHead className="text-slate-400 font-semibold">Symbol</TableHead>
-                        <TableHead className="text-slate-400 font-semibold">Price</TableHead>
-                        <TableHead className="text-slate-400 font-semibold">Amount</TableHead>
-                        <TableHead className="text-slate-400 font-semibold">Value</TableHead>
-                        <TableHead className="text-slate-400 font-semibold">P&L</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">Tarih</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">İşlem</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">Sembol</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">Fiyat</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">Miktar</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">Değer</TableHead>
+                        <TableHead className="text-slate-400 font-semibold">K/Z</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -898,7 +898,7 @@ export default function Dashboard() {
                           <TableCell className="font-mono text-slate-500 text-xs">
                             {t.created_at?.seconds 
                               ? new Date(t.created_at.seconds * 1000).toLocaleString() 
-                              : 'Just now'}
+                              : 'Şimdi'}
                           </TableCell>
                           <TableCell>
                             <Badge className={`${t.type === 'BUY' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
@@ -938,22 +938,24 @@ export default function Dashboard() {
           <Card className="bg-slate-950/80 border-slate-800/50 backdrop-blur-xl shadow-2xl font-mono overflow-hidden">
             <CardHeader className="border-b border-slate-800 py-3">
               <CardTitle className="text-sm text-slate-400 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                System Heartbeat & Logs
+                Sistem Durumu & Loglar
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 h-48 overflow-y-auto bg-black/50">
               <div className="space-y-2">
                 {systemLogs.length === 0 ? (
-                  <p className="text-slate-600 text-xs text-center pt-8">Waiting for heartbeat...</p>
+                  <p className="text-slate-600 text-xs text-center pt-8">Sinyal bekleniyor...</p>
                 ) : (
                   systemLogs.map((log) => (
                     <div key={log.id} className="text-xs flex gap-2 animate-in fade-in slide-in-from-left-2 items-start opacity-80 hover:opacity-100 transition-opacity">
                       <span className="text-slate-500 shrink-0">
-                        [{log.created_at?.seconds ? new Date(log.created_at.seconds * 1000).toLocaleTimeString() : 'Now'}]
+                        [{log.created_at?.seconds ? new Date(log.created_at.seconds * 1000).toLocaleTimeString() : 'Şimdi'}]
                       </span>
                       <span className="text-emerald-400/90">&gt;</span>
-                      <span className="text-slate-300 break-words">{log.desc}</span>
+                      <span className={log.strategy === 'HOURLY_REPORT' ? "text-blue-400 font-bold" : "text-slate-300 break-words"}>
+                        {log.strategy === 'HOURLY_REPORT' ? '[SAATLİK RAPOR] ' : ''}
+                        {log.desc}
+                      </span>
                     </div>
                   ))
                 )}
