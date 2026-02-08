@@ -64,6 +64,56 @@ python backend/scripts/live_hunter.py
 
 ---
 
+## 🍓 Raspberry Pi 5 Deployment Guide (7/24 Operation)
+
+tRAIDer, Raspberry Pi 5 (8GB) üzerinde düşük güç tüketimiyle 7/24 çalışacak şekilde optimize edilmiştir.
+
+### 1. Sistem Hazırlığı
+- **OS:** Raspberry Pi OS 64-bit (Zorunlu).
+- **Update:** `sudo apt update && sudo apt upgrade -y`
+- **Dependencies:** `sudo apt install python3-pip python3-venv git screen -y`
+
+### 2. Kurulum
+```bash
+git clone https://github.com/alazndy/TrAIder.git
+cd TrAIder
+python3 -m venv venv
+source venv/bin/activate
+pip install xgboost pandas ccxt ta yfinance scipy statsmodels
+```
+
+### 3. Zeka Transferi (Kritik!) 🧠
+Canavar PC'nizde eğittiğiniz `backend/data/proteus_omega_4h/omega_4h_brain.json` dosyasını Raspberry Pi'deki aynı klasöre kopyalayın. Bot, NVIDIA kartı olmadığını anlayınca otomatik olarak CPU modunda çalışacaktır.
+
+### 4. Ölümsüzlük Ayarı (Systemd Service)
+Botun elektrik kesilse bile otomatik başlaması için:
+1. `sudo nano /etc/systemd/system/traider.service`
+2. Aşağıdaki içeriği yapıştırın (User ve Path kısımlarını güncelleyin):
+```ini
+[Unit]
+Description=tRAIDer Omega Prime Live Bot
+After=network.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/TrAIder/backend/scripts
+ExecStart=/home/pi/TrAIder/venv/bin/python live_hunter.py
+Restart=always
+StandardOutput=file:/home/pi/TrAIder/trades.log
+StandardError=file:/home/pi/TrAIder/error.log
+
+[Install]
+WantedBy=multi-user.target
+```
+3. Aktif et: `sudo systemctl enable --now traider.service`
+
+### 5. Uzaktan Erişim
+- **SSH:** `ssh pi@your_pi_ip`
+- **Tailscale:** Dış dünyadan güvenli erişim için Pi'ye Tailscale kurun.
+- **Log Takibi:** `tail -f /home/pi/TrAIder/trades.log`
+
+---
+
 ## ⚠️ Yasal Uyarı
 Bu proje tamamen eğitim ve araştırma amaçlıdır. Finansal tavsiye niteliği taşımaz. Geçmiş performanslar, gelecek sonuçların garantisi değildir. Kendi risk analizinizi yapmadan gerçek sermaye ile işlem yapmayınız.
 
