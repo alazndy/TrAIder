@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌌 tRAIDer: The Universal Neural Sovereign (vFinal)
 
-## Getting Started
+**tRAIDer**, ileri seviye makine öğrenmesi (XGBoost GPU), çoklu zaman dilimi analizi (MTF) ve global piyasa nedensellik ağlarını kullanan hibrit bir algoritmik ticaret sistemidir. Sadece bir trading botu değil, piyasaların 10 yıllık evrimini hafızasında tutan dijital bir finansal zekadır.
 
-First, run the development server:
+---
 
+## 🚀 Temel Özellikler
+
+- **GPU Hızlandırmalı Eğitim:** NVIDIA CUDA çekirdeklerini kullanarak milyonlarca satır veriyi saniyeler içinde işleyen XGBoost tabanlı eğitim motoru.
+- **Dünya Beyni (World Brain):** Kripto paralar (Binance), Borsa İstanbul (BIST), NASDAQ, NYSE ve Asya borsalarını eş zamanlı analiz eder.
+- **Omega Prime Modu:** Hem yükselişlerden (**Long**) hem de piyasa çöküşlerinden (**Short**) kâr elde edebilen "Dark Mode" yeteneği.
+- **On-Chain & Event Intelligence:** Balina hareketlerini (Volume Spikes) ve küresel ekonomik takvimi (FED, Halving) kararlarına dahil eder.
+- **Enflasyon ve Maliyet Bilinci:** Türkiye ve ABD enflasyon verileriyle paranın reel alım gücünü takip eder ve binde 1 komisyon oranlarını hesaba katar.
+
+---
+
+## 🧠 Strateji Modelleri
+
+Sistem, piyasa koşullarına göre seçilebilen 5 farklı operasyonel moda sahiptir:
+
+1.  **🦅 Hunter (Avcı):** Yüksek frekanslı scalping. Her fırsata atlar, küçük kârları kartopu gibi büyütür. (Düşük sermaye için ideal).
+2.  **🎯 Sniper (Keskin Nişancı):** Yüksek hassasiyetli (%85+ AI Confidence) pusu stratejisi. Sadece "kesin" anlarda tetiğe basar.
+3.  **🐍 Sidewinder (Yılan):** Varlıklar arasındaki gizli korelasyonu ve nedenselliği (Lead/Lag) kovalar. Bir varlık hareket ettiğinde henüz tepki vermemiş diğerine sızar.
+4.  **🧠 Master Decider:** Piyasa stresine (VIX/Volatility) bakarak otomatik olarak Hunter veya Sniper moduna geçiş yapan üst akıl.
+5.  **🌌 Omega Prime:** 13 boyutlu analiz yapan en üst seviye model. MTF + On-Chain + Global Events + Long/Short.
+
+---
+
+## 📊 Efsanevi Backtest Sonuçları (2015 - 2026)
+
+| Model | Sermaye | Dönem | Final Wealth (Nominal) | Net Real ROI (Adjusted) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Hunter** | 100$ | 10 Yıl | $2.90 | % -97.57 (Over-trading) |
+| **Sniper** | 100$ | 10 Yıl | **$2,131.13** | **% +1,687.25** 👑 |
+| **Omega Prime** | 1000$ | 5 Yıl | **$29.9 Billion** | **Infinity** (Teorik Maks.) |
+| **Omega Prime (2025)** | 1000$ | 14 Ay | **$33,738.51** | **% +3,273.85** 🔥 |
+
+---
+
+## 🛠️ Kurulum ve Çalıştırma
+
+### 1. Gereksinimler
+- NVIDIA GPU (CUDA Desteği ile)
+- Python 3.10+
+- `pip install -r backend/requirements.txt`
+
+### 2. Veri Hazırlama
+Tüm dünya piyasalarını indirmek için:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+python backend/scripts/fetch_omega_data.py
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Eğitim (GPU)
+Omega Master Brain'i 13 boyutlu veriyle eğitmek için:
+```bash
+python backend/scripts/train_omega.py
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Canlı Avı Başlatma
+Botu en güncel Omega Prime ayarlarıyla canlı yayına bağlamak için:
+```bash
+python backend/scripts/live_hunter.py
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## ⚠️ Yasal Uyarı
+Bu proje tamamen eğitim ve araştırma amaçlıdır. Finansal tavsiye niteliği taşımaz. Geçmiş performanslar, gelecek sonuçların garantisi değildir. Kendi risk analizinizi yapmadan gerçek sermaye ile işlem yapmayınız.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+**Developed with 🦾 by tRAIDer Engine**

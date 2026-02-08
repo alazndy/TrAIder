@@ -38,12 +38,20 @@ def train_gpu():
         df['rsi'] = RSIIndicator(df['close']).rsi()
         df['sma_ratio'] = df['close'].rolling(10).mean() / df['close'].rolling(30).mean()
         
-        # 2. Mode Detection (Loose thresholds for 1h)
+        # 2. Dynamic Thresholds based on Asset Class
+        # Stocks are less volatile than crypto
+        is_stock = len(symbol) < 3 or symbol.isdigit() or "_" in symbol and "USDT" not in symbol
+        
+        # Thresholds
+        trend_thresh = 0.5 if is_stock else 1.0
+        vol_thresh = 1.0 if is_stock else 2.0
+        
+        # Mode Detection
         trend = df['close'].pct_change(20) * 100
         vol = df['close'].rolling(20).std() / df['close'].rolling(20).mean() * 100
         
-        is_bull = (trend > 0.5) & (vol < 2)
-        is_bear = (trend < -0.5) & (vol < 2)
+        is_bull = (trend > trend_thresh) & (vol < vol_thresh)
+        is_bear = (trend < -trend_thresh) & (vol < vol_thresh)
         
         # 3. Target
         df['target'] = (df['close'].shift(-1) > df['close']).astype(int)
