@@ -16,6 +16,13 @@ from sklearn.preprocessing import StandardScaler
 import pickle
 import os
 
+# Try importing XGBoost
+try:
+    import xgboost as xgb
+    XGB_AVAILABLE = True
+except ImportError:
+    XGB_AVAILABLE = False
+
 class AdaptiveAIStrategy(BaseStrategy):
     """
     Multi-Mode AI Strategy
@@ -214,8 +221,24 @@ class AdaptiveAIStrategy(BaseStrategy):
         print(f"[AI-{mode.upper()}] Model saved to {path}")
     
     def _load_models(self):
-        """Tum modelleri yukle."""
+        """Tum modelleri yukle (JSON XGBoost veya Pickle Sklearn)."""
         for mode in self.MODES:
+            # 1. Try Loading JSON (XGBoost GPU)
+            json_path = os.path.join(self.model_dir, f"{mode}_model.json")
+            if XGB_AVAILABLE and os.path.exists(json_path):
+                try:
+                    model = xgb.XGBClassifier()
+                    model.load_model(json_path)
+                    self.models[mode] = model
+                    self.is_trained[mode] = True
+                    # Set scaler to None to indicate raw features
+                    self.scalers[mode] = None 
+                    print(f"[AI-{mode.upper()}] XGBoost (GPU) Model loaded")
+                    continue
+                except Exception as e:
+                    print(f"[AI-{mode.upper()}] Failed to load XGBoost: {e}")
+
+            # 2. Try Loading Pickle (Legacy Sklearn)
             path = os.path.join(self.model_dir, f"{mode}_model.pkl")
             if os.path.exists(path):
                 try:
@@ -224,7 +247,7 @@ class AdaptiveAIStrategy(BaseStrategy):
                         self.models[mode] = data['model']
                         self.scalers[mode] = data['scaler']
                         self.is_trained[mode] = True
-                        print(f"[AI-{mode.upper()}] Model loaded")
+                        print(f"[AI-{mode.upper()}] Legacy Model loaded")
                 except Exception as e:
                     print(f"[AI-{mode.upper()}] Failed to load: {e}")
     
@@ -239,6 +262,7 @@ class AdaptiveAIStrategy(BaseStrategy):
         
         # Model egitilmemisse egit
         if not self.is_trained[current_mode]:
+            # Canli egitim sadece CPU modunda calisir (simdilik)
             success = self.train_mode(candles, current_mode)
             if not success:
                 return {"signal": "NEUTRAL", "reason": f"{current_mode} model not trained", "mode": current_mode}
@@ -251,12 +275,22 @@ class AdaptiveAIStrategy(BaseStrategy):
         
         # Tahmin
         X = features.iloc[[-1]]
-        X_scaled = self.scalers[current_mode].transform(X)
         
-        prediction = self.models[current_mode].predict(X_scaled)[0]
-        probability = self.models[current_mode].predict_proba(X_scaled)[0]
-        confidence = max(probability) * 100
+        # Scaler kontrolu (XGBoost icin None olabilir)
+        if self.scalers[current_mode] is not None:
+             X_input = self.scalers[current_mode].transform(X)
+        else:
+             X_input = X # Raw features for XGBoost
         
+        prediction = self.models[current_mode].predict(X_input)[0]
+        probability = self.models[current_mode].predict_proba(X_input)[0]
+        
+        # XGBoost returns [prob_class_0, prob_class_1] usually, but check dims
+        if isinstance(probability, (list, np.ndarray)):
+            confidence = max(probability) * 100
+        else:
+            confidence = probability * 100 # Single value logic if any
+            
         # Moda gore sinyal esigi ayarla
         if current_mode == "bull":
             threshold = 52  # Bull'da daha agresif
