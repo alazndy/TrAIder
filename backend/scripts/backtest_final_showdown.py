@@ -17,7 +17,7 @@ DATA_DIR = '../data/raw'
 MODEL_DIR = '../data/proteus_neo'
 SIDEWINDER_MAP = '../data/sidewinder_map.json'
 START_DATE = '2015-01-01'
-INITIAL_CAPITAL = 100.0
+INITIAL_CAPITAL = 20000.0
 COMMISSION_RATE = 0.001
 
 # Turkey Stats
@@ -28,7 +28,7 @@ TR_CUMULATIVE_INFLATION = 13.59 # Prices rose 13.6x
 def run_showdown():
     print("="*80)
     print(f"⚔️ THE ULTIMATE SHOWDOWN: HUNTER vs SNIPER (2015-2025)")
-    print(f"💰 Starting Capital: $10.0 per bot")
+    print(f"💰 Starting Capital: ${INITIAL_CAPITAL:,.2f} per bot")
     print(f"🇹🇷 Inflation Hurdle: Beat 1359% return to survive")
     print("="*80)
 
