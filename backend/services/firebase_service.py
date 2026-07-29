@@ -98,5 +98,49 @@ class FirebaseService:
         except Exception as e:
             print(f"[Firebase] Trade Save Error: {e}")
 
+    def get_signals(self, limit: int = 20) -> List[Dict[str, Any]]:
+        """Retrieves recent signals."""
+        if not self.db:
+            return []
+            
+        try:
+            docs = self.db.collection("signals")\
+                .order_by("created_at", direction=firestore.Query.DESCENDING)\
+                .limit(limit)\
+                .stream()
+                
+            return [{**doc.to_dict(), "id": doc.id} for doc in docs]
+        except Exception as e:
+            print(f"[Firebase] Fetch Signals Error: {e}")
+            return []
+
+    def get_recent_trades(self, limit: int = 20) -> List[Dict[str, Any]]:
+        """Retrieves recent trades."""
+        if not self.db:
+            return []
+            
+        try:
+            docs = self.db.collection("trades")\
+                .order_by("created_at", direction=firestore.Query.DESCENDING)\
+                .limit(limit)\
+                .stream()
+                
+            return [{**doc.to_dict(), "id": doc.id} for doc in docs]
+        except Exception as e:
+            print(f"[Firebase] Fetch Trades Error: {e}")
+            return []
+
+    def get_portfolio(self, portfolio_id: str = "live_portfolio_v1") -> Dict[str, Any]:
+        """Retrieves portfolio object."""
+        if not self.db:
+            return {}
+            
+        try:
+            doc = self.db.collection("portfolios").document(portfolio_id).get()
+            return doc.to_dict() if doc.exists else {}
+        except Exception as e:
+            print(f"[Firebase] Fetch Portfolio Error: {e}")
+            return {}
+
 # Global instance
 firebase_client = FirebaseService()

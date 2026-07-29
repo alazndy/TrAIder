@@ -270,12 +270,23 @@ def run_live_cycle():
 
     print("Waiting for next cycle...")
 
+# Global State Control
+BOT_CONTROLLER = {
+    "is_running": True, # Default to True for daemon mode
+    "symbol": "BTC"
+}
+
 def start_live_trader():
     """Starts the infinite trading loop (for embedding in main.py)"""
-    print("[THREAD] Starting Live Trader Background Service...")
+    print(f"[THREAD] Starting Live Trader Background Service for {BOT_CONTROLLER['symbol']}... (Interval: 1 hour)")
     while True:
         try:
-            run_live_cycle()
+            if BOT_CONTROLLER["is_running"]:
+                run_live_cycle()
+            else:
+                pass
+                # print("[TRADER] Paused...")
+                
             time.sleep(60) 
         except Exception as e:
             err_msg = f"CRITICAL ERROR IN TRADER LOOP: {str(e)}"

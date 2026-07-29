@@ -17,7 +17,8 @@ async def lifespan(app: FastAPI):
     # Download AI models from Firebase Storage (if not already present)
     try:
         from download_models import download_models
-        download_models()
+        # download_models()
+        print("[SYSTEM] Model download skipped (Forcing Retrain)")
     except Exception as e:
         print(f"[SYSTEM] Model download skipped: {e}")
     
@@ -245,6 +246,77 @@ async def trigger_trade_cycle():
         return {"status": "Cycle completed successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+from services.firebase_service import firebase_client
+
+@app.get("/api/v1/signals")
+async def get_signals(limit: int = 20):
+    """Get recent signals from Firestore"""
+    return firebase_client.get_signals(limit)
+
+@app.get("/api/v1/trades")
+async def get_trades(limit: int = 20):
+    """Get recent trades from Firestore"""
+    return firebase_client.get_recent_trades(limit)
+
+@app.get("/api/v1/portfolio")
+async def get_portfolio():
+    """Get live portfolio from Firestore"""
+    return firebase_client.get_portfolio()
+
+# --- BOT CONTROL ENDPOINTS ---
+from paper_trader import BOT_CONTROLLER
+
+@app.post("/api/v1/bot/start")
+def start_bot(symbol: str = "BTC"):
+    if BOT_CONTROLLER["is_running"]:
+        return {"status": "Already running"}
+    
+    BOT_CONTROLLER["is_running"] = True
+    BOT_CONTROLLER["symbol"] = symbol
+    return {"status": "Started", "symbol": symbol}
+
+@app.post("/api/v1/bot/stop")
+def stop_bot():
+    BOT_CONTROLLER["is_running"] = False
+    return {"status": "Stopped"}
+
+@app.get("/api/v1/bot/status")
+def get_bot_status():
+    portfolio = firebase_client.get_portfolio()
+    return {
+        "is_running": BOT_CONTROLLER["is_running"],
+        "balance": portfolio.get("balance", 0),
+        "total_trades": portfolio.get("total_trades", 0),
+        "position": None # Simplified for now, can be expanded to show active position
+    }
+
+# --- BOT CONTROL ENDPOINTS ---
+from paper_trader import BOT_CONTROLLER
+
+@app.post("/api/v1/bot/start")
+def start_bot(symbol: str = "BTC"):
+    if BOT_CONTROLLER["is_running"]:
+        return {"status": "Already running"}
+    
+    BOT_CONTROLLER["is_running"] = True
+    BOT_CONTROLLER["symbol"] = symbol
+    return {"status": "Started", "symbol": symbol}
+
+@app.post("/api/v1/bot/stop")
+def stop_bot():
+    BOT_CONTROLLER["is_running"] = False
+    return {"status": "Stopped"}
+
+@app.get("/api/v1/bot/status")
+def get_bot_status():
+    portfolio = firebase_client.get_portfolio()
+    return {
+        "is_running": BOT_CONTROLLER["is_running"],
+        "balance": portfolio.get("balance", 0),
+        "total_trades": portfolio.get("total_trades", 0),
+        "position": None # Simplified for now, can be expanded to show active position
+    }
 
 if __name__ == "__main__":
     # Ensure PORT is read from env for Render

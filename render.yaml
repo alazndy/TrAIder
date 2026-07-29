@@ -1,6 +1,6 @@
 services:
-  - type: worker
-    name: traider-worker
+  - type: web
+    name: traider-backend
     env: docker
     dockerContext: backend
     dockerfilePath: backend/Dockerfile
@@ -11,9 +11,28 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-    # Command to override the default Docker CMD if needed,
-    # but our Dockerfile CMD ["python", "main.py"] runs the API.
-    # For the continuous trader, we want to run paper_trader.py.
-    # So we should probably update Dockerfile or override here.
-    # Using Docker CMD override to run the paper trader loop:
-    dockerCommand: python paper_trader.py --live
+      - key: PORT
+        value: 10000
+    # Run the Main API (which launches the trader thread)
+    startCommand: python main.py
+
+  - type: web
+    name: traider-frontend
+    env: node
+    repo: https://github.com/alazndy/TrAIder
+    branch: master
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://traider-backend.onrender.com # Auto-discovery is tricky with CORS, hardcoding or using internal might fail for client-side fetches.
+        # Actually, for client-side fetches, we need the PUBLIC URL. 
+        # fromService provides the internal URL usually? No, Render provides public URL via host property.
+        # But let's stick to a placeholder or manual setup for now to avoid circular dependency if name changes.
+        # Better yet, use the fromService syntax which is supported by Render Blueprints.
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: traider-backend
+          envVarKey: RENDER_EXTERNAL_URL # Render exposes this automatically
+

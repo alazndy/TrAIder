@@ -123,11 +123,11 @@ def main():
     args = parser.parse_args()
     
     print("\n" + "="*70)
-    print(f"🚀 BACKTEST RUNNER | Mode: {args.mode.upper()} | Range: {args.start} to {args.end}")
+    print(f"BACKTEST RUNNER | Mode: {args.mode.upper()} | Range: {args.start} to {args.end}")
     print("="*70)
     
     # Fetch Macro Data Once
-    macro_df = fetch_macro_data()
+    macro_df = fetch_macro_data(start_date=args.start)
     if macro_df is None:
         print("[Error] Macro data fetch failed.")
         return
@@ -144,7 +144,7 @@ def main():
         for group_name, config in HYBRID_PORTFOLIO.items():
             strat = config["strategy"]
             for sym in config["assets"]:
-                crypto_df = fetch_crypto(sym)
+                crypto_df = fetch_crypto(sym, start_date=args.start)
                 if crypto_df is None or crypto_df.empty: continue
                 
                 full_df = merge_data(crypto_df, macro_df)
@@ -165,7 +165,7 @@ def main():
         
         for sym in targets:
             sym = sym.strip()
-            crypto_df = fetch_crypto(sym)
+            crypto_df = fetch_crypto(sym, start_date=args.start)
             if crypto_df is None: continue
             
             full_df = merge_data(crypto_df, macro_df)
@@ -184,7 +184,7 @@ def main():
             print("Error: --symbol required for single mode")
             return
             
-        crypto_df = fetch_crypto(args.symbol)
+        crypto_df = fetch_crypto(args.symbol, start_date=args.start)
         if crypto_df is not None:
             full_df = merge_data(crypto_df, macro_df)
             roi, profit, t_log = run_strategy(full_df, args.strategy, args.symbol, args.start, args.end, args.capital)
@@ -201,7 +201,7 @@ def main():
     if all_trades:
         trades_df = pd.DataFrame(all_trades)
         trades_df.sort_values(by="Date", inplace=True)
-        csv_filename = "trades_log_2025.csv"
+        csv_filename = f"trades_log_{args.start.replace('-', '')}_{args.end.replace('-', '')}.csv"
         trades_df.to_csv(csv_filename, index=False)
         print(f"\n[+] Trade log saved to: {csv_filename}")
 
